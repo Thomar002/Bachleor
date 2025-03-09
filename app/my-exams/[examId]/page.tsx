@@ -9,10 +9,6 @@ export default async function MyExamPage({ params }: { params: { examId: string 
     return <div>Exam not found</div>
   }
 
-  return (
-    <MainLayout>
-      <QuestionDashboard examId={Number(params.examId)} examName={exam.name} />
-    </MainLayout>
-  )
+  return <QuestionDashboard examId={Number(params.examId)} examName={exam.name} />
 }
 
