@@ -28,6 +28,16 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [availableTags, setAvailableTags] = useState<string[]>([])
 
+  // Legg til en funksjon for å bygge riktig URL
+  const getQuestionUrl = (questionId: number) => {
+    // Hvis vi er i subjects-ruten
+    if (params.subjectId) {
+      return `/subjects/${params.subjectId}/exams/${examId}/questions/${questionId}`
+    }
+    // Hvis vi er i my-exams-ruten
+    return `/my-exams/${examId}/questions/${questionId}`
+  }
+
   // 3. Only fetch questions if examId is valid
   useEffect(() => {
     if (examId) {
@@ -187,7 +197,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                     className="grid grid-cols-[1fr_1fr_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
                   >
                     <Link
-                      href={`/subjects/${params.subjectCode}/exams/${examId}/questions/${question.id}`}
+                      href={getQuestionUrl(question.id)}
                       className="hover:underline"
                     >
                       {question.name}
