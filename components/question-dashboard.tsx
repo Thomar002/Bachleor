@@ -152,12 +152,24 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
       exam_id: examId,
     }
 
-    const { error } = await supabase.from("Questions").insert([newQuestion])
+    const { data, error } = await supabase.from("Questions").insert([newQuestion]).select() // Add .select() to get the created question
 
     if (error) {
       console.error("Error creating question:", error)
     } else {
-      fetchQuestions()
+      // Process the new question data to ensure tags is handled correctly
+      const processedNewQuestion = {
+        ...data[0],
+        tags: Array.isArray(data[0].tags)
+          ? data[0].tags
+          : typeof data[0].tags === "string"
+            ? JSON.parse(data[0].tags)
+            : []
+      }
+
+      // Update the questions state with the new question
+      setQuestions(prevQuestions => [...prevQuestions, processedNewQuestion])
+      setIsCreateOverlayOpen(false)
     }
   }
 
