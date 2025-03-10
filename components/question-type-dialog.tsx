@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Circle, ThumbsUp, ThumbsDown, Type } from "lucide-react"
+import { CheckCircle, Circle, ThumbsUp, ThumbsDown, Type, FunctionSquare } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
 
@@ -47,18 +47,23 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
       icon: <Type className="w-8 h-8" />,
       path: "text"
     },
+    {
+      id: "equation",
+      name: "Equation",
+      icon: <FunctionSquare className="w-8 h-8" />,
+      path: "equation"
+    }
   ]
 
   const handleTypeClick = (typeId: string, path: string) => {
-    onTypeSelect([typeId])
-    onOpenChange(false)
-
     // Construct the URL based on the current route
     const baseUrl = params.subjectId
       ? `/subjects/${params.subjectId}/exams/${params.examId}/questions/${params.questionId}`
       : `/my-exams/${params.examId}/questions/${params.questionId}`
 
     router.push(`${baseUrl}/${path}`)
+    onTypeSelect([typeId])
+    onOpenChange(false)
   }
 
   return (
@@ -78,7 +83,7 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
               onClick={() => handleTypeClick(type.id, type.path)}
             >
               {type.icon || type.icons}
-              <span className="text-lg font-medium">{type.name}</span>
+              <span className="text-center">{type.name}</span>
             </Button>
           ))}
         </div>

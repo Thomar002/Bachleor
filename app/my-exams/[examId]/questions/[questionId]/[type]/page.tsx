@@ -2,6 +2,7 @@ import { MultipleChoiceSingle } from "@/components/question-types/multiple-choic
 import { MultipleChoiceMultiple } from "@/components/question-types/multiple-choice-multiple"
 import { TrueFalse } from "@/components/question-types/true-false"
 import { Text } from "@/components/question-types/text"
+import { Equation } from "@/components/question-types/equation"
 import { supabase } from "@/lib/supabaseClient"
 
 export default async function QuestionTypePage({ params }: { params: { type: string, questionId: string } }) {
@@ -16,6 +17,7 @@ export default async function QuestionTypePage({ params }: { params: { type: str
     "multiple-choice-multiple": MultipleChoiceMultiple,
     "true-false": TrueFalse,
     "text": Text,
+    "equation": Equation,
   }
 
   const Component = components[params.type as keyof typeof components]
