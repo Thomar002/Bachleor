@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical } from "lucide-react"
+import { Search, Plus, MoreVertical, ArrowUpDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
@@ -17,10 +17,15 @@ interface Exam {
   subject_id: string
 }
 
+type SortField = 'subject_id' | 'created_at'
+type SortOrder = 'asc' | 'desc'
+
 export default function ExamList({ subjectId = null }: { subjectId?: string | null }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [exams, setExams] = useState<Exam[]>([])
   const [isCreateOverlayOpen, setIsCreateOverlayOpen] = useState(false)
+  const [sortField, setSortField] = useState<SortField>('created_at')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const router = useRouter()
 
   useEffect(() => {
@@ -51,6 +56,38 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
       exam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       exam.description.toLowerCase().includes(searchQuery.toLowerCase()),
   )
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // If clicking the same field, toggle the order
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      // If clicking a new field, set it as the sort field and default to ascending
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }
+
+  const sortedExams = [...filteredExams].sort((a, b) => {
+    if (sortField === 'subject_id') {
+      const subjectA = (a.subject_id || '').toLowerCase()
+      const subjectB = (b.subject_id || '').toLowerCase()
+      return sortOrder === 'asc'
+        ? subjectA.localeCompare(subjectB)
+        : subjectB.localeCompare(subjectA)
+    } else {
+      const dateA = new Date(a.created_at).getTime()
+      const dateB = new Date(b.created_at).getTime()
+      return sortOrder === 'asc'
+        ? dateA - dateB
+        : dateB - dateA
+    }
+  })
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '↕'
+    return sortOrder === 'asc' ? '↑' : '↓'
+  }
 
   async function handleDelete(examId: number) {
     const { error } = await supabase.from("Exams").delete().eq("id", examId)
@@ -137,17 +174,21 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
           <div className="grid grid-cols-[1fr_1fr_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
             <div>Name</div>
             <div>Description</div>
-            <div>Subject</div>
-            <div>Date changed</div>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleSort('subject_id')}>
+              Subject {getSortIcon('subject_id')}
+            </div>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleSort('created_at')}>
+              Date changed {getSortIcon('created_at')}
+            </div>
             <div></div>
           </div>
 
           {/* Table Body */}
           <div className="divide-y divide-gray-200">
-            {filteredExams.length === 0 ? (
+            {sortedExams.length === 0 ? (
               <div className="p-8 text-center text-gray-500">No exams yet. Click "Create exam" to add one.</div>
             ) : (
-              filteredExams.map((exam) => (
+              sortedExams.map((exam) => (
                 <div
                   key={exam.id}
                   className="grid grid-cols-[1fr_1fr_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"

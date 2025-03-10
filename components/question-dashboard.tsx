@@ -12,6 +12,9 @@ import Link from "next/link"
 import { CreateQuestionOverlay } from "./create-question-overlay"
 import { useParams } from "next/navigation"
 
+type SortField = 'created_at'
+type SortOrder = 'asc' | 'desc'
+
 interface Question {
   id: number
   name: string
@@ -27,6 +30,8 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const [isCreateOverlayOpen, setIsCreateOverlayOpen] = useState(false)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [sortField, setSortField] = useState<SortField>('created_at')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
   // Legg til en funksjon for å bygge riktig URL
   const getQuestionUrl = (questionId: number) => {
@@ -91,6 +96,26 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
       question.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       (!selectedTag || question.tags.includes(selectedTag))
   )
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '↕'
+    return sortOrder === 'asc' ? '↑' : '↓'
+  }
+
+  const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime()
+    const dateB = new Date(b.created_at).getTime()
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+  })
 
   async function handleDelete(questionId: number) {
     const { error } = await supabase.from("Questions").delete().eq("id", questionId)
@@ -180,18 +205,20 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
             <div className="grid grid-cols-[1fr_1fr_200px_48px] bg-[#9BA5B7] p-4 font-medium">
               <div>Name</div>
               <div>Tags</div>
-              <div>Date changed</div>
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleSort('created_at')}>
+                Date changed {getSortIcon('created_at')}
+              </div>
               <div></div>
             </div>
 
             {/* Table Body */}
             <div className="divide-y divide-gray-200">
-              {filteredQuestions.length === 0 ? (
+              {sortedQuestions.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   No questions yet. Click "Add Question" to create one.
                 </div>
               ) : (
-                filteredQuestions.map((question) => (
+                sortedQuestions.map((question) => (
                   <div
                     key={question.id}
                     className="grid grid-cols-[1fr_1fr_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"

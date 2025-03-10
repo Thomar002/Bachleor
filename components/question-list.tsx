@@ -9,6 +9,9 @@ import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { CreateQuestionOverlay } from "./create-question-overlay"
 
+type SortField = 'created_at'
+type SortOrder = 'asc' | 'desc'
+
 interface Question {
   id: number
   name: string
@@ -23,6 +26,8 @@ export default function QuestionList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [questions, setQuestions] = useState<Question[]>([])
   const [isCreateOverlayOpen, setIsCreateOverlayOpen] = useState(false)
+  const [sortField, setSortField] = useState<SortField>('created_at')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const router = useRouter()
 
   useEffect(() => {
@@ -56,6 +61,26 @@ export default function QuestionList() {
       question.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       question.exam_name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortOrder('asc')
+    }
+  }
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '↕'
+    return sortOrder === 'asc' ? '↑' : '↓'
+  }
+
+  const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime()
+    const dateB = new Date(b.created_at).getTime()
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+  })
 
   async function handleDelete(questionId: number) {
     const { error } = await supabase.from("Questions").delete().eq("id", questionId)
@@ -139,16 +164,18 @@ export default function QuestionList() {
             <div>Tags</div>
             <div>Type</div>
             <div>Exam</div>
-            <div>Date Changed</div>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleSort('created_at')}>
+              Date changed {getSortIcon('created_at')}
+            </div>
             <div></div>
           </div>
 
           {/* Table Body */}
           <div className="divide-y divide-gray-200">
-            {filteredQuestions.length === 0 ? (
+            {sortedQuestions.length === 0 ? (
               <div className="p-8 text-center text-gray-500">No questions yet. Click "Create question" to add one.</div>
             ) : (
-              filteredQuestions.map((question) => (
+              sortedQuestions.map((question) => (
                 <div
                   key={question.id}
                   className="grid grid-cols-[1fr_200px_200px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
