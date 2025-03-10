@@ -150,22 +150,27 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">{subjectId ? `Exams for ${subjectId}` : "My Exams"}</h1>
-          <Button className="bg-[#2B2B2B] hover:bg-[#3B3B3B]" onClick={() => setIsCreateOverlayOpen(true)}>
+        </div>
+
+        {/* Search Bar and Create Button */}
+        <div className="flex gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
+          <Button
+            className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
+            onClick={() => setIsCreateOverlayOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Create exam
           </Button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
-          <Input
-            type="text"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-64"
-          />
         </div>
 
         {/* Exam Table */}
