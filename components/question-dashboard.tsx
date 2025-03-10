@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient"
 import Link from "next/link"
 import { CreateQuestionOverlay } from "./create-question-overlay"
 import { useParams } from "next/navigation"
+import { Checkbox } from "@/components/ui/checkbox"
 
 type SortField = 'created_at'
 type SortOrder = 'asc' | 'desc'
@@ -32,6 +33,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [selectedQuestions, setSelectedQuestions] = useState<number[]>([])
 
   // Legg til en funksjon for å bygge riktig URL
   const getQuestionUrl = (questionId: number) => {
@@ -159,6 +161,56 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
     }
   }
 
+  const handleSelectQuestion = (questionId: number) => {
+    setSelectedQuestions(prev =>
+      prev.includes(questionId)
+        ? prev.filter(id => id !== questionId)
+        : [...prev, questionId]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedQuestions.length === sortedQuestions.length) {
+      setSelectedQuestions([])
+    } else {
+      setSelectedQuestions(sortedQuestions.map(q => q.id))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (!selectedQuestions.length) return
+
+    const { error } = await supabase
+      .from("Questions")
+      .delete()
+      .in("id", selectedQuestions)
+
+    if (error) {
+      console.error("Error deleting questions:", error)
+    } else {
+      setSelectedQuestions([])
+      fetchQuestions()
+    }
+  }
+
+  const handleBulkExport = () => {
+    if (!selectedQuestions.length) return
+
+    const questionsToExport = sortedQuestions.filter(q =>
+      selectedQuestions.includes(q.id)
+    )
+
+    // Create a JSON file and trigger download
+    const dataStr = JSON.stringify(questionsToExport, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+
+    const exportFileDefaultName = 'questions-export.json'
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
+
   return (
     <>
       <main className="flex-1 p-8">
@@ -175,7 +227,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                 <SelectValue placeholder="Filter by tag" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">No Tags</SelectItem>
+                <SelectItem value="all">All Tags</SelectItem>
                 {availableTags.map((tag) => (
                   <SelectItem key={tag} value={tag}>
                     {tag}
@@ -193,7 +245,33 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                 className="pl-10 w-full"
               />
             </div>
-            <Button className="bg-[#2B2B2B] hover:bg-[#3B3B3B]" onClick={() => setIsCreateOverlayOpen(true)}>
+          </div>
+
+          {/* Action Bar */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              {selectedQuestions.length > 0 && (
+                <>
+                  <Button
+                    variant="destructive"
+                    onClick={handleBulkDelete}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete Selected ({selectedQuestions.length})
+                  </Button>
+                  <Button
+                    onClick={handleBulkExport}
+                    className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
+                  >
+                    Export Selected ({selectedQuestions.length})
+                  </Button>
+                </>
+              )}
+            </div>
+            <Button
+              className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
+              onClick={() => setIsCreateOverlayOpen(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Question
             </Button>
@@ -202,10 +280,19 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
           {/* Questions Table */}
           <div className="bg-[#B8C2D1] rounded-lg overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[1fr_1fr_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+            <div className="grid grid-cols-[48px_1fr_1fr_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+              <div>
+                <Checkbox
+                  checked={selectedQuestions.length === sortedQuestions.length && sortedQuestions.length > 0}
+                  onCheckedChange={handleSelectAll}
+                />
+              </div>
               <div>Name</div>
               <div>Tags</div>
-              <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleSort('created_at')}>
+              <div
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => handleSort('created_at')}
+              >
                 Date changed {getSortIcon('created_at')}
               </div>
               <div></div>
@@ -221,8 +308,14 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                 sortedQuestions.map((question) => (
                   <div
                     key={question.id}
-                    className="grid grid-cols-[1fr_1fr_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
+                    className="grid grid-cols-[48px_1fr_1fr_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
                   >
+                    <div>
+                      <Checkbox
+                        checked={selectedQuestions.includes(question.id)}
+                        onCheckedChange={() => handleSelectQuestion(question.id)}
+                      />
+                    </div>
                     <Link
                       href={getQuestionUrl(question.id)}
                       className="hover:underline"
