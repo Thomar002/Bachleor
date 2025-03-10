@@ -1,15 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Menu, Bot } from "lucide-react"
+import { Menu, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { EditorToolbar } from "../editor-toolbar"
 import { QuestionTypeDialog } from "../question-type-dialog"
 
-export function TrueFalse() {
+export function Text() {
   const [displayName, setDisplayName] = useState("")
-  const [correctAnswer, setCorrectAnswer] = useState<"true" | "false" | null>(null)
+  const [answer, setAnswer] = useState("")
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
   const [type, setType] = useState<string[]>([])
 
@@ -37,7 +38,7 @@ export function TrueFalse() {
           </div>
         </div>
         <div className="p-4 border-t">
-          <h1 className="text-xl font-semibold">True/False Question</h1>
+          <h1 className="text-xl font-semibold">Text Question</h1>
         </div>
         <div className="px-4 pb-4">
           <Input
@@ -51,23 +52,21 @@ export function TrueFalse() {
       </div>
 
       <div className="container mx-auto p-6 max-w-3xl">
-        <Input className="text-lg mb-8" placeholder="Enter your question description here..." />
-
+        <Textarea
+          className="text-lg mb-8"
+          placeholder="Enter your question description here..."
+        />
         <div className="space-y-4">
-          {["true", "false"].map((option) => (
-            <div key={option} className="flex items-center gap-4">
-              <div
-                className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === option ? "border-green-500 bg-green-500" : "border-gray-300"
-                  }`}
-                onClick={() => setCorrectAnswer(option as "true" | "false")}
-              >
-                {correctAnswer === option && <Check className="h-4 w-4 text-white" />}
-              </div>
-              <span className="capitalize">{option}</span>
-            </div>
-          ))}
+          <h2 className="font-medium">Correct Answer</h2>
+          <Textarea
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            className="min-h-[200px]"
+            placeholder="Enter the correct answer here..."
+          />
         </div>
       </div>
+
       <QuestionTypeDialog
         open={isTypeDialogOpen}
         onOpenChange={setIsTypeDialogOpen}
@@ -77,4 +76,3 @@ export function TrueFalse() {
     </div>
   )
 }
-

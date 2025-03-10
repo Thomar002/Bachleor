@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +32,16 @@ export default function QuestionEditor({ questionId, examId, initialName, initia
   const [description, setDescription] = useState(initialDescription)
   const [type, setType] = useState(initialType)
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
+
+  useEffect(() => {
+    // If no type is set, navigate to text type
+    if (!initialType || initialType.length === 0) {
+      const baseUrl = params.subjectId
+        ? `/subjects/${params.subjectId}/exams/${examId}/questions/${questionId}`
+        : `/my-exams/${examId}/questions/${questionId}`
+      router.push(`${baseUrl}/text`)
+    }
+  }, [])
 
   const handleSave = async () => {
     await updateQuestion({

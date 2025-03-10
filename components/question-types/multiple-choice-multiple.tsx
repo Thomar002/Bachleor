@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Trash2, ArrowLeft } from "lucide-react"
+import { Check, Trash2, Menu, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
-import { useRouter } from "next/navigation"
+import { QuestionTypeDialog } from "../question-type-dialog"
 
 interface Option {
   id: string
@@ -14,12 +14,19 @@ interface Option {
 }
 
 export function MultipleChoiceMultiple() {
-  const router = useRouter()
+  const [displayName, setDisplayName] = useState("")
   const [options, setOptions] = useState<Option[]>([
     { id: "1", text: "Option 1", isCorrect: false },
     { id: "2", text: "Option 2", isCorrect: false },
     { id: "3", text: "Option 3", isCorrect: false },
   ])
+  const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
+  const [type, setType] = useState<string[]>([])
+
+  const handleTypeChange = (newTypes: string[]) => {
+    setType(newTypes)
+    setIsTypeDialogOpen(false)
+  }
 
   const handleOptionChange = (id: string, text: string) => {
     setOptions(options.map((opt) => (opt.id === id ? { ...opt, text } : opt)))
@@ -47,10 +54,30 @@ export function MultipleChoiceMultiple() {
     <div className="bg-gray-50">
       <div className="border-b bg-white">
         <div className="flex items-center gap-4 p-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <div className="mb-8 flex gap-4">
+            <Button
+              onClick={() => setIsTypeDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Menu className="h-5 w-5" />
+              Question Type
+            </Button>
+            <Button className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              AI creator
+            </Button>
+          </div>
+        </div>
+        <div className="p-4 border-t">
           <h1 className="text-xl font-semibold">Multiple Choice (Multiple Answers)</h1>
+        </div>
+        <div className="px-4 pb-4">
+          <Input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Enter display name..."
+            className="max-w-md mx-auto"
+          />
         </div>
         <EditorToolbar />
       </div>
@@ -86,6 +113,12 @@ export function MultipleChoiceMultiple() {
           Add option
         </Button>
       </div>
+      <QuestionTypeDialog
+        open={isTypeDialogOpen}
+        onOpenChange={setIsTypeDialogOpen}
+        onTypeSelect={handleTypeChange}
+        currentTypes={type}
+      />
     </div>
   )
 }

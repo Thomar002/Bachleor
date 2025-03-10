@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Circle, ThumbsUp, ThumbsDown } from "lucide-react"
+import { CheckCircle, Circle, ThumbsUp, ThumbsDown, Type } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
 
@@ -40,6 +40,12 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
         </div>
       ),
       path: "true-false"
+    },
+    {
+      id: "text",
+      name: "Text answer",
+      icon: <Type className="w-8 h-8" />,
+      path: "text"
     },
   ]
 
