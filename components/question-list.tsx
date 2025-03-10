@@ -46,27 +46,34 @@ export default function QuestionList() {
       setIsLoading(true)
       setError(null)
 
-      const { data, error } = await supabase
+      // First, get all questions
+      const { data: questionsData, error: questionsError } = await supabase
         .from("Questions")
-        .select(`
-          id,
-          exam_id,
-          name,
-          tags,
-          created_at,
-          type
-        `)
+        .select("*")
         .order('created_at', { ascending: false })
 
-      if (error) throw new Error(`Database error: ${error.message}`)
-      if (!data) throw new Error("No data returned from database")
+      if (questionsError) throw new Error(`Database error: ${questionsError.message}`)
+      if (!questionsData) throw new Error("No data returned from database")
 
-      const formattedQuestions = data.map(question => ({
+      // Get all exams to map their names
+      const { data: examsData, error: examsError } = await supabase
+        .from("Exams")
+        .select("id, name")
+
+      if (examsError) throw new Error(`Database error: ${examsError.message}`)
+
+      // Create a map of exam IDs to names
+      const examMap = (examsData || []).reduce((acc, exam) => {
+        acc[exam.id] = exam.name
+        return acc
+      }, {} as Record<string, string>)
+
+      const formattedQuestions = questionsData.map(question => ({
         id: question.id,
         name: question.name || "Unnamed Question",
         type: Array.isArray(question.type) ? question.type : [],
         exam_id: question.exam_id,
-        exam_name: "No exam",
+        exam_name: examMap[question.exam_id] || "No exam",
         created_at: question.created_at,
         tags: question.tags === null ? [] :
           Array.isArray(question.tags) ? question.tags :

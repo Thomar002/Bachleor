@@ -22,6 +22,7 @@ interface Question {
   tags: string[]
   created_at: string
   exam_id: number
+  type: string[]
 }
 
 export default function QuestionDashboard({ examId, examName }: { examId: number; examName: string }) {
@@ -77,10 +78,8 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
     if (error) {
       console.error("Error fetching questions:", error)
     } else {
-      // Process the data to ensure tags is always an array
       const processedData = (data || []).map((question) => ({
         ...question,
-        // Convert tags to array if it's not already
         tags: Array.isArray(question.tags)
           ? question.tags
           : typeof question.tags === "string"
@@ -88,6 +87,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
               ? JSON.parse(question.tags)
               : []
             : [],
+        type: Array.isArray(question.type) ? question.type : []
       }))
       setQuestions(processedData)
     }
@@ -288,7 +288,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
           {/* Questions Table */}
           <div className="bg-[#B8C2D1] rounded-lg overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[48px_1fr_1fr_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+            <div className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
               <div>
                 <Checkbox
                   checked={selectedQuestions.length === sortedQuestions.length && sortedQuestions.length > 0}
@@ -296,7 +296,9 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                 />
               </div>
               <div>Name</div>
+              <div>Type</div>
               <div>Tags</div>
+              <div>Exam</div>
               <div
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={() => handleSort('created_at')}
@@ -316,7 +318,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                 sortedQuestions.map((question) => (
                   <div
                     key={question.id}
-                    className="grid grid-cols-[48px_1fr_1fr_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
+                    className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
                   >
                     <div>
                       <Checkbox
@@ -330,7 +332,9 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                     >
                       {question.name}
                     </Link>
+                    <div>{question.type?.join(", ") || ""}</div>
                     <div>{question.tags.join(", ")}</div>
+                    <div>{examName}</div>
                     <div>{new Date(question.created_at).toLocaleDateString("no-NO")}</div>
                     <div className="flex justify-end">
                       <DropdownMenu>
