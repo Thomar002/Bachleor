@@ -223,6 +223,17 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
     linkElement.click()
   }
 
+  // Add export function
+  const handleExport = (question: Question) => {
+    const dataStr = JSON.stringify(question, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+    const exportFileDefaultName = `question-${question.id}-export.json`
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
+
   return (
     <>
       <main className="flex-1 p-8">
@@ -345,7 +356,8 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleCopy(question)}>Copy</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(question.id)}>Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExport(question)}>Export</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(question.id)} className="text-red-600">Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

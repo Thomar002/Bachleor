@@ -214,7 +214,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleCopy(exam)}>Copy</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleExport(exam.id)}>Export</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(exam.id)}>Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(exam.id)} className="text-red-600">Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

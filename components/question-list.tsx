@@ -100,17 +100,29 @@ export default function QuestionList() {
   }
 
   const handleDeleteQuestion = async (questionId: number) => {
-    try {
-      const { error } = await supabase
-        .from("Questions")
-        .delete()
-        .eq("id", questionId)
+    const { error } = await supabase.from("Questions").delete().eq("id", questionId)
 
-      if (error) throw error
+    if (error) {
+      console.error("Error deleting question:", error)
+    } else {
       fetchQuestions()
-      setSelectedQuestions([])
-    } catch (err) {
-      console.error("Error deleting question:", err)
+    }
+  }
+
+  const handleCopy = async (question: Question) => {
+    const newQuestion = {
+      name: `${question.name} (Copy)`,
+      tags: question.tags,
+      exam_id: question.exam_id,
+      type: question.type
+    }
+
+    const { error } = await supabase.from("Questions").insert([newQuestion])
+
+    if (error) {
+      console.error("Error copying question:", error)
+    } else {
+      fetchQuestions()
     }
   }
 
@@ -171,6 +183,16 @@ export default function QuestionList() {
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
 
     const exportFileDefaultName = 'questions-export.json'
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
+
+  const handleExport = (question: Question) => {
+    const dataStr = JSON.stringify(question, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+    const exportFileDefaultName = `question-${question.id}-export.json`
     const linkElement = document.createElement('a')
     linkElement.setAttribute('href', dataUri)
     linkElement.setAttribute('download', exportFileDefaultName)
@@ -337,15 +359,9 @@ export default function QuestionList() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleQuestionClick(question.id, question.exam_id)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteQuestion(question.id)}
-                        className="text-red-600"
-                      >
-                        Delete
-                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleCopy(question)}>Copy</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExport(question)}>Export</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteQuestion(question.id)} className="text-red-600">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
