@@ -96,7 +96,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const filteredQuestions = questions.filter(
     (question) =>
       question.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (!selectedTag || question.tags.includes(selectedTag))
+      (!selectedTag || (selectedTag === "none" ? question.tags.length === 0 : question.tags.includes(selectedTag)))
   )
 
   const handleSort = (field: SortField) => {
@@ -253,12 +253,12 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
 
           {/* Search, Filter, and Add Button Bar */}
           <div className="flex gap-4 mb-6">
-            <Select value={selectedTag || "all"} onValueChange={(value) => setSelectedTag(value === "all" ? null : value)}>
+            <Select value={selectedTag || "none"} onValueChange={(value) => setSelectedTag(value === "none" ? null : value)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by tag" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Tags</SelectItem>
+                <SelectItem value="none">No Tags</SelectItem>
                 {availableTags.map((tag) => (
                   <SelectItem key={tag} value={tag}>
                     {tag}
