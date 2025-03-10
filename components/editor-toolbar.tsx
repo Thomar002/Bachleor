@@ -53,16 +53,18 @@ export function EditorToolbar({
         </SelectContent>
       </Select>
 
-      <Select defaultValue="12" onValueChange={onSizeChange}>
+      <Select defaultValue="3" onValueChange={onSizeChange}>
         <SelectTrigger className="w-[70px]">
           <SelectValue placeholder="Size" />
         </SelectTrigger>
         <SelectContent>
-          {[8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36].map((size) => (
-            <SelectItem key={size} value={size.toString()}>
-              {size}
-            </SelectItem>
-          ))}
+          <SelectItem value="1">Small</SelectItem>
+          <SelectItem value="2">Medium</SelectItem>
+          <SelectItem value="3">Normal</SelectItem>
+          <SelectItem value="4">Large</SelectItem>
+          <SelectItem value="5">X-Large</SelectItem>
+          <SelectItem value="6">XX-Large</SelectItem>
+          <SelectItem value="7">XXX-Large</SelectItem>
         </SelectContent>
       </Select>
 
