@@ -260,4 +260,3 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
     </>
   )
 }
-
