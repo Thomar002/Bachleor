@@ -200,12 +200,31 @@ export default function QuestionList() {
   return (
     <main className="flex-1 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+        {/* Header with Title and Bulk Actions */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">My Questions</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold">My Questions</h1>
+            {selectedQuestions.length > 0 && (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete Selected ({selectedQuestions.length})
+                </Button>
+                <Button
+                  onClick={handleBulkExport}
+                  className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
+                >
+                  Export Selected ({selectedQuestions.length})
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Search and Filter Bar */}
+        {/* Search, Filter, and Add Button Bar */}
         <div className="flex gap-4 mb-6">
           <Select value={selectedTag || "all"} onValueChange={(value) => setSelectedTag(value === "all" ? null : value)}>
             <SelectTrigger className="w-[180px]">
@@ -229,36 +248,6 @@ export default function QuestionList() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 w-full"
             />
-          </div>
-          <Button
-            className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
-            onClick={() => setIsCreateOverlayOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create question
-          </Button>
-        </div>
-
-        {/* Action Bar */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            {selectedQuestions.length > 0 && (
-              <>
-                <Button
-                  variant="destructive"
-                  onClick={handleBulkDelete}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete Selected ({selectedQuestions.length})
-                </Button>
-                <Button
-                  onClick={handleBulkExport}
-                  className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
-                >
-                  Export Selected ({selectedQuestions.length})
-                </Button>
-              </>
-            )}
           </div>
           <Button
             className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
