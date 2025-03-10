@@ -9,8 +9,9 @@ export const COLORS = {
 }
 
 export const ROUTES = {
-  home: '/dashboard',  // Changed from '/frontpage' to '/dashboard'
+  home: '/dashboard',
   exams: '/my-exams',
   subjects: '/subjects',
   profile: '/profile',
+  questions: '/my-questions',
 }

@@ -9,6 +9,9 @@ export default function DashboardSelection() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="space-y-4">
+        <Button className="w-64 h-16 text-xl" onClick={() => router.push("/my-questions")}>
+          My Questions
+        </Button>
         <Button className="w-64 h-16 text-xl" onClick={() => router.push("/my-exams")}>
           My Exams
         </Button>
