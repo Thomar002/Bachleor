@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
 import { QuestionTypeDialog } from "../question-type-dialog"
+import { Separator } from "@/components/ui/separator"
 
 interface Attachment {
   type: 'image' | 'video' | 'file';
@@ -13,7 +14,11 @@ interface Attachment {
   name: string;
 }
 
-export function TrueFalse() {
+interface Props {
+  questionName: string;
+}
+
+export function TrueFalse({ questionName }: Props) {
   const [displayName, setDisplayName] = useState("")
   const [correctAnswer, setCorrectAnswer] = useState<"true" | "false" | null>(null)
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
@@ -77,8 +82,10 @@ export function TrueFalse() {
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
-        <div className="flex items-center gap-4 p-4">
-          <div className="mb-8 flex gap-4">
+        <div className="p-4">
+          <h1 className="text-xl font-semibold mb-4">{questionName}</h1>
+          <Separator className="my-4" />
+          <div className="flex gap-4">
             <Button
               onClick={() => setIsTypeDialogOpen(true)}
               className="flex items-center gap-2"
@@ -91,9 +98,6 @@ export function TrueFalse() {
               AI creator
             </Button>
           </div>
-        </div>
-        <div className="p-4 border-t">
-          <h1 className="text-xl font-semibold">True/False Question</h1>
         </div>
         <div className="px-4 pb-4">
           <Input
