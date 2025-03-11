@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabaseClient"
 interface CreateExamOverlayProps {
   isOpen: boolean
   onClose: () => void
-  onCreateExam: (name: string, description: string, subjectId: string) => void
+  onCreateExam: (name: string, description: string, subjectId: string | null) => void
   subjectId?: string | null
 }
 
@@ -75,16 +75,12 @@ export function CreateExamOverlay({ isOpen, onClose, onCreateExam, subjectId = n
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Sikre at subject ID er i små bokstaver
-    const finalSubjectId = (subjectId || selectedSubject).toLowerCase()
-    if (!finalSubjectId) {
-      alert("Please select a subject")
-      return
-    }
+    // Only use selectedSubject if one is selected
+    const finalSubjectId = selectedSubject ? selectedSubject.toLowerCase() : null
     onCreateExam(name, description, finalSubjectId)
     setName("")
     setDescription("")
-    setSelectedSubject(subjectId?.toLowerCase() || "")
+    setSelectedSubject("")
     onClose()
   }
 
@@ -103,13 +99,20 @@ export function CreateExamOverlay({ isOpen, onClose, onCreateExam, subjectId = n
             <Label htmlFor="description">Description</Label>
             <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} required />
           </div>
-          {/* Vis bare subject-velgeren hvis vi ikke har et subjectId */}
           {!subjectId && (
             <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Select value={selectedSubject} onValueChange={setSelectedSubject} required>
-                <SelectTrigger id="subject">
-                  <SelectValue placeholder="Select a subject" />
+              <Label htmlFor="subject">Subject (Optional)</Label>
+              <Select
+                value={selectedSubject}
+                onValueChange={(value) => {
+                  console.log('Selected value:', value); // Add this for debugging
+                  setSelectedSubject(value);
+                }}
+              >
+                <SelectTrigger id="subject" className="w-full">
+                  <SelectValue placeholder="Select a subject">
+                    {subjects.find(s => s.id === selectedSubject)?.name || "Select a subject"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {loading ? (

@@ -242,51 +242,56 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
               <h1 className="text-3xl font-bold">{examName}</h1>
-              {selectedQuestions.length > 0 && (
-                <>
-                  <Button
-                    variant="destructive"
-                    onClick={handleBulkDelete}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Delete Selected ({selectedQuestions.length})
-                  </Button>
-                  <Button
-                    onClick={handleBulkExport}
-                    className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
-                  >
-                    Export Selected ({selectedQuestions.length})
-                  </Button>
-                </>
-              )}
             </div>
           </div>
 
           {/* Search, Filter, and Add Button Bar */}
           <div className="flex gap-4 mb-6">
-            <Select value={selectedTag || "none"} onValueChange={(value) => setSelectedTag(value === "none" ? null : value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by tag" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Tags</SelectItem>
-                {availableTags.map((tag) => (
-                  <SelectItem key={tag} value={tag}>
-                    {tag}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Search questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-full"
-              />
-            </div>
+            {selectedQuestions.length > 0 ? (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete Selected ({selectedQuestions.length})
+                </Button>
+                <Button
+                  onClick={handleBulkExport}
+                  className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
+                >
+                  Export Selected ({selectedQuestions.length})
+                </Button>
+                <div className="flex-1" /> {/* Spacer */}
+              </>
+            ) : (
+              <>
+                <Select value={selectedTag || "none"} onValueChange={(value) => setSelectedTag(value === "none" ? null : value)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by tag" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Tags</SelectItem>
+                    {availableTags.map((tag) => (
+                      <SelectItem key={tag} value={tag}>
+                        {tag}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="relative w-[270px]"> {/* Increased from 180px to 270px (1.5x) */}
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                  <Input
+                    type="text"
+                    placeholder="Search questions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+                </div>
+                <div className="flex-1" /> {/* Spacer */}
+              </>
+            )}
             <Button
               className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
               onClick={() => setIsCreateOverlayOpen(true)}

@@ -115,7 +115,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
     }
   }
 
-  async function handleCreateExam(name: string, description: string, subjectId: string) {
+  async function handleCreateExam(name: string, description: string, subjectId: string | null) {
     const newExam = {
       name,
       description,
@@ -154,7 +154,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
 
         {/* Search Bar and Create Button */}
         <div className="flex gap-4 mb-6">
-          <div className="relative flex-1">
+          <div className="relative w-[270px]"> {/* Increased from 180px to 270px (1.5x) */}
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <Input
               type="text"
@@ -164,6 +164,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
               className="pl-10 w-full"
             />
           </div>
+          <div className="flex-1" /> {/* Spacer */}
           <Button
             className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
             onClick={() => setIsCreateOverlayOpen(true)}
@@ -202,7 +203,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
                     {exam.name}
                   </button>
                   <div>{exam.description}</div>
-                  <div>{exam.subject_id}</div>
+                  <div>{exam.subject_id || "No subject"}</div>
                   <div>{new Date(exam.created_at).toLocaleDateString("no-NO")}</div>
                   <div className="flex justify-end">
                     <DropdownMenu>
