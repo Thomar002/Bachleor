@@ -13,6 +13,12 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname()
   const isDashboard = pathname === ROUTES.home
+  const isLoginPage = pathname === "/"  // Add this line
+
+  // If we're on the login page, return children without the layout
+  if (isLoginPage) {
+    return <>{children}</>
+  }
 
   const navigationItems = [
     { href: ROUTES.profile, label: "Profile", icon: User },
