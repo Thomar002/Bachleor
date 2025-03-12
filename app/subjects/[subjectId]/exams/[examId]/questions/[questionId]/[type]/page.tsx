@@ -28,6 +28,24 @@ export default async function QuestionTypePage({ params }: { params: { type: str
     return <div>Question not found</div>
   }
 
-  return <Component questionName={question.name} />
+  // Parse tags if they're stored as a string
+  const parsedTags = question.tags
+    ? (Array.isArray(question.tags)
+      ? question.tags
+      : typeof question.tags === 'string'
+        ? JSON.parse(question.tags)
+        : [])
+    : []
+
+  return <Component
+    questionName={question.name}
+    initialTags={parsedTags}
+    onTagsChange={async (newTags) => {
+      await supabase
+        .from("Questions")
+        .update({ tags: newTags })
+        .eq("id", params.questionId)
+    }}
+  />
 }
 
