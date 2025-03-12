@@ -342,8 +342,8 @@ export default function QuestionList() {
             />
           </div>
           <div>Name</div>
-          <div>Tags</div>
           <div>Type</div>
+          <div>Tags</div>
           <div>Exam</div>
           <div
             className="flex items-center gap-2 cursor-pointer"
@@ -386,8 +386,8 @@ export default function QuestionList() {
                 >
                   {question.name}
                 </button>
-                <div>{question.tags.join(", ")}</div>
                 <div>{question.type.join(", ")}</div>
+                <div>{question.tags.join(", ")}</div>
                 <div>
                   <Select
                     value={question.exam_id?.toString() || "none"}

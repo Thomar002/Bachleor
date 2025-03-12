@@ -40,10 +40,10 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const getQuestionUrl = (questionId: number) => {
     // Hvis vi er i subjects-ruten
     if (params.subjectId) {
-      return `/subjects/${params.subjectId}/exams/${examId}/questions/${questionId}`
+      return `/subjects/${params.subjectId}/exams/${examId}/questions/${questionId}/text`
     }
     // Hvis vi er i my-exams-ruten
-    return `/my-exams/${examId}/questions/${questionId}`
+    return `/my-exams/${examId}/questions/${questionId}/text`
   }
 
   // 3. Only fetch questions if examId is valid

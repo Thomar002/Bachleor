@@ -19,16 +19,10 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
 
   const questionTypes = [
     {
-      id: "multiple-choice-single",
-      name: "Multiple choice (single answer)",
-      icon: <CheckCircle className="w-8 h-8" />,
-      path: "multiple-choice-single"
-    },
-    {
-      id: "multiple-choice-multiple",
-      name: "Multiple choice (multiple answers)",
-      icon: <Circle className="w-8 h-8" />,
-      path: "multiple-choice-multiple"
+      id: "text",
+      name: "Text answer",
+      icon: <Type className="w-8 h-8" />,
+      path: "text"
     },
     {
       id: "true-false",
@@ -42,10 +36,16 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
       path: "true-false"
     },
     {
-      id: "text",
-      name: "Text answer",
-      icon: <Type className="w-8 h-8" />,
-      path: "text"
+      id: "multiple-choice-single",
+      name: "Multiple choice (single answer)",
+      icon: <CheckCircle className="w-8 h-8" />,
+      path: "multiple-choice-single"
+    },
+    {
+      id: "multiple-choice-multiple",
+      name: "Multiple choice (multiple answers)",
+      icon: <Circle className="w-8 h-8" />,
+      path: "multiple-choice-multiple"
     },
     {
       id: "equation",
