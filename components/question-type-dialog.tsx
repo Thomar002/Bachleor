@@ -66,6 +66,9 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
     onOpenChange(false)
   }
 
+  // Get the current path from params
+  const currentPath = params.type as string
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -78,8 +81,9 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
             <Button
               key={type.id}
               variant="outline"
-              className={`h-auto p-6 flex flex-col items-center gap-4 ${currentTypes.includes(type.id) ? "border-blue-500 border-2" : ""
-                }`}
+              className={`h-auto p-6 flex flex-col items-center gap-4 
+                ${currentTypes.includes(type.id) ? "border-blue-500 border-2" : ""}
+                ${type.path === currentPath ? "border-blue-500 border-2 bg-blue-50" : ""}`}
               onClick={() => handleTypeClick(type.id, type.path)}
             >
               {type.icon || type.icons}

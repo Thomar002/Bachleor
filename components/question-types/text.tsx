@@ -146,13 +146,16 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
           <h1 className="text-xl font-semibold mb-4">{questionName}</h1>
           <Separator className="my-4" />
           <div className="flex gap-4">
-            <Button
-              onClick={() => setIsTypeDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Menu className="h-5 w-5" />
-              Question Type
-            </Button>
+            <div className="flex flex-col items-center">
+              <Button
+                onClick={() => setIsTypeDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Menu className="h-5 w-5" />
+                Question Type
+              </Button>
+              <span className="text-sm text-gray-600 mt-1">Text Answer</span>
+            </div>
             <Button
               onClick={() => setIsTagDialogOpen(true)}
               className="flex items-center gap-2"
@@ -160,10 +163,13 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               <Tag className="h-5 w-5" />
               Tags ({tags.length})
             </Button>
-            <Button className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              AI creator
-            </Button>
+            <div className="flex flex-col items-center">
+              <Button className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                AI creator
+              </Button>
+              <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
+            </div>
           </div>
           {/* Display current tags */}
           <div className="mt-2 flex flex-wrap gap-2">

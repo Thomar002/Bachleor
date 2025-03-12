@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Menu, Bot, Plus, Divide, Square } from "lucide-react"
+import { Menu, Bot, Plus, Divide, Square, Tag } from "lucide-react"
 import { EditorToolbar } from "@/components/editor-toolbar"
 import { QuestionTypeDialog } from "@/components/question-type-dialog"
+import { TagDialog } from "@/components/tag-dialog"
+import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
 import {
@@ -18,20 +20,105 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-interface EquationProps {
-  questionName: string
+interface Props {
+  questionName: string;
+  initialTags?: string[];
+  onTagsChange?: (tags: string[]) => void;
 }
 
-export function Equation({ questionName }: EquationProps) {
+export function Equation({ questionName, initialTags = [], onTagsChange }: Props) {
   const router = useRouter()
   const params = useParams()
+  const questionId = params.questionId as string
 
   const [displayName, setDisplayName] = useState(questionName)
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
+  const [isTagDialogOpen, setIsTagDialogOpen] = useState(false)
+  const [type, setType] = useState<string[]>([])
+  const [tags, setTags] = useState<string[]>(initialTags)
+  const [availableTags, setAvailableTags] = useState<string[]>([])
   const [equation, setEquation] = useState("")
   const [answer, setAnswer] = useState("")
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
   const [attachments, setAttachments] = useState<Array<{ type: string; url: string }>>([])
+
+  useEffect(() => {
+    fetchAvailableTags()
+    if (initialTags.length > 0) {
+      setTags(initialTags)
+    } else {
+      fetchQuestionTags()
+    }
+  }, [initialTags])
+
+  const fetchQuestionTags = async () => {
+    if (!questionId) return
+
+    const { data, error } = await supabase
+      .from("Questions")
+      .select("tags")
+      .eq("id", questionId)
+      .single()
+
+    if (error) {
+      console.error("Error fetching question tags:", error)
+      return
+    }
+
+    if (data?.tags) {
+      const parsedTags = Array.isArray(data.tags)
+        ? data.tags
+        : typeof data.tags === 'string'
+          ? JSON.parse(data.tags)
+          : []
+      setTags(parsedTags)
+    }
+  }
+
+  const fetchAvailableTags = async () => {
+    const { data, error } = await supabase
+      .from("Questions")
+      .select("tags")
+
+    if (error) {
+      console.error("Error fetching tags:", error)
+      return
+    }
+
+    const allTags = data
+      .flatMap(q => {
+        if (Array.isArray(q.tags)) return q.tags
+        if (typeof q.tags === 'string') {
+          try {
+            return JSON.parse(q.tags)
+          } catch {
+            return []
+          }
+        }
+        return []
+      })
+      .filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
+
+    setAvailableTags([...new Set(allTags)])
+  }
+
+  const handleTagsChange = async (newTags: string[]) => {
+    if (!questionId) return
+
+    setTags(newTags)
+
+    const { error } = await supabase
+      .from("Questions")
+      .update({ tags: newTags })
+      .eq("id", questionId)
+
+    if (error) {
+      console.error("Error updating tags:", error)
+      return
+    }
+
+    onTagsChange?.(newTags)
+  }
 
   const equationSymbols = [
     { label: "Fraction", symbol: "÷", icon: <Divide className="h-4 w-4" /> },
@@ -73,15 +160,17 @@ export function Equation({ questionName }: EquationProps) {
     // Implement file upload logic
   }
 
-  const handleTypeSelect = (types: string[]) => {
-    if (types.length > 0 && types[0] !== "equation") {
+  const handleTypeChange = (newTypes: string[]) => {
+    if (newTypes.length > 0 && newTypes[0] !== "equation") {
       // Construct the URL based on the current route
       const baseUrl = params.subjectId
         ? `/subjects/${params.subjectId}/exams/${params.examId}/questions/${params.questionId}`
         : `/my-exams/${params.examId}/questions/${params.questionId}`
 
-      router.push(`${baseUrl}/${types[0]}`)
+      router.push(`${baseUrl}/${newTypes[0]}`)
     }
+    setType(newTypes)
+    setIsTypeDialogOpen(false)
   }
 
   const handleBold = () => {
@@ -130,21 +219,43 @@ export function Equation({ questionName }: EquationProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="border-b">
-        <div className="container mx-auto py-4">
+    <div className="bg-gray-50">
+      <div className="border-b bg-white">
+        <div className="p-4">
+          <h1 className="text-xl font-semibold mb-4">{questionName}</h1>
           <div className="flex gap-4">
+            <div className="flex flex-col items-center">
+              <Button
+                onClick={() => setIsTypeDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Menu className="h-5 w-5" />
+                Question Type
+              </Button>
+              <span className="text-sm text-gray-600 mt-1">Equation</span>
+            </div>
             <Button
-              onClick={() => setIsTypeDialogOpen(true)}
+              onClick={() => setIsTagDialogOpen(true)}
               className="flex items-center gap-2"
             >
-              <Menu className="h-5 w-5" />
-              Question Type
+              <Tag className="h-5 w-5" />
+              Tags ({tags.length})
             </Button>
-            <Button className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              AI creator
-            </Button>
+            <div className="flex flex-col items-center">
+              <Button className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                AI creator
+              </Button>
+              <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
+            </div>
+          </div>
+          {/* Display current tags */}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                {tag}
+              </div>
+            ))}
           </div>
         </div>
         <div className="px-4 pb-4">
@@ -276,8 +387,16 @@ export function Equation({ questionName }: EquationProps) {
       <QuestionTypeDialog
         open={isTypeDialogOpen}
         onOpenChange={setIsTypeDialogOpen}
-        onTypeSelect={() => { }}
-        currentTypes={["equation"]}
+        onTypeSelect={handleTypeChange}
+        currentTypes={type}
+      />
+
+      <TagDialog
+        open={isTagDialogOpen}
+        onOpenChange={setIsTagDialogOpen}
+        currentTags={tags}
+        availableTags={availableTags}
+        onTagsChange={handleTagsChange}
       />
     </div>
   )
