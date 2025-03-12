@@ -64,11 +64,11 @@ export function CreateExamOverlay({ isOpen, onClose, onCreateExam, subjectId = n
   // Hardcoded subjects as fallback
   function setHardcodedSubjects() {
     const hardcodedSubjects = [
-      { id: "ikt210", name: "IKT210 - Programming" },
-      { id: "ikt211", name: "IKT211 - Databases" },
-      { id: "ikt212", name: "IKT212 - Web Development" },
-      { id: "ikt213", name: "IKT213 - Mobile Development" },
-      { id: "ikt214", name: "IKT214 - System Architecture" }
+      { id: "ikt210", name: "IKT210" },
+      { id: "ikt211", name: "IKT211" },
+      { id: "ikt212", name: "IKT212" },
+      { id: "ikt213", name: "IKT213" },
+      { id: "ikt214", name: "IKT214" }
     ]
     setSubjects(hardcodedSubjects)
   }

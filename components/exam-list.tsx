@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical, ArrowUpDown } from "lucide-react"
+import { Search, Plus, MoreVertical, ArrowUpDown, ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { CreateExamOverlay } from "./create-exam-overlay"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
+const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
 
 interface Exam {
   id: number
@@ -27,6 +31,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const router = useRouter()
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([])
 
   useEffect(() => {
     fetchExams()
@@ -144,6 +149,58 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
     }
   }
 
+  useEffect(() => {
+    async function fetchSubjects() {
+      try {
+        // First try to fetch from Supabase
+        const { data, error } = await supabase.from("Subjects").select("id, name")
+
+        if (error) {
+          console.error("Error fetching subjects from Supabase:", error)
+          // Fall back to hardcoded data if there's an error
+          setHardcodedSubjects()
+        } else if (data && data.length > 0) {
+          console.log("Subjects fetched from Supabase:", data)
+          setSubjects(data)
+        } else {
+          console.log("No subjects found in Supabase, using hardcoded data")
+          setHardcodedSubjects()
+        }
+      } catch (error) {
+        console.error("Failed to fetch subjects:", error)
+        setHardcodedSubjects()
+      }
+    }
+
+    fetchSubjects()
+  }, [])
+
+  // Hardcoded subjects as fallback
+  function setHardcodedSubjects() {
+    const hardcodedSubjects = [
+      { id: "ikt210", name: "IKT210" },
+      { id: "ikt211", name: "IKT211" },
+      { id: "ikt212", name: "IKT212" },
+      { id: "ikt213", name: "IKT213" },
+      { id: "ikt214", name: "IKT214" }
+    ]
+    setSubjects(hardcodedSubjects)
+  }
+
+  const handleSubjectChange = async (examId: number, newSubjectId: string | null) => {
+    const finalSubjectId = newSubjectId ? newSubjectId.toLowerCase() : null
+    const { error } = await supabase
+      .from("Exams")
+      .update({ subject_id: finalSubjectId })
+      .eq("id", examId)
+
+    if (error) {
+      console.error("Error updating exam subject:", error)
+    } else {
+      fetchExams()
+    }
+  }
+
   return (
     <main className="flex-1 p-8">
       <div className="max-w-6xl mx-auto">
@@ -203,7 +260,26 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
                     {exam.name}
                   </button>
                   <div>{exam.description}</div>
-                  <div>{exam.subject_id || "No subject"}</div>
+                  <div>
+                    <Select
+                      value={exam.subject_id || "none"}
+                      onValueChange={(value) => handleSubjectChange(exam.id, value === "none" ? null : value)}
+                    >
+                      <SelectTrigger className={selectTriggerStyles}>
+                        <SelectValue>
+                          {subjects.find(s => s.id === exam.subject_id)?.name || "No subject"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className={selectContentStyles}>
+                        <SelectItem value="none">No subject</SelectItem>
+                        {subjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id}>
+                            {subject.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>{new Date(exam.created_at).toLocaleDateString("no-NO")}</div>
                   <div className="flex justify-end">
                     <DropdownMenu>

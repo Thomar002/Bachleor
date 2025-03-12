@@ -3,13 +3,16 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical } from "lucide-react"
+import { Search, Plus, MoreVertical, ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { CreateQuestionOverlay } from "./create-question-overlay"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
+const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
 
 interface Question {
   id: number
@@ -36,6 +39,7 @@ export default function QuestionList() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [selectedQuestions, setSelectedQuestions] = useState<number[]>([])
   const router = useRouter()
+  const [exams, setExams] = useState<{ id: number; name: string }[]>([])
 
   useEffect(() => {
     fetchQuestions()
@@ -232,6 +236,36 @@ export default function QuestionList() {
     }
   }
 
+  const handleExamChange = async (questionId: number, newExamId: string | null) => {
+    const { error } = await supabase
+      .from("Questions")
+      .update({ exam_id: newExamId })
+      .eq("id", questionId)
+
+    if (error) {
+      console.error("Error updating question exam:", error)
+    } else {
+      fetchQuestions()
+    }
+  }
+
+  useEffect(() => {
+    async function fetchExams() {
+      const { data, error } = await supabase
+        .from("Exams")
+        .select("id, name")
+        .order('name', { ascending: true })
+
+      if (error) {
+        console.error("Error fetching exams:", error)
+      } else {
+        setExams(data || [])
+      }
+    }
+
+    fetchExams()
+  }, [])
+
   return (
     <div className="container mx-auto py-6">
       {/* Header with Title */}
@@ -354,8 +388,27 @@ export default function QuestionList() {
                 </button>
                 <div>{question.tags.join(", ")}</div>
                 <div>{question.type.join(", ")}</div>
-                <div>{question.exam_name}</div>
-                <div>{new Date(question.created_at).toLocaleDateString()}</div>
+                <div>
+                  <Select
+                    value={question.exam_id?.toString() || "none"}
+                    onValueChange={(value) => handleExamChange(question.id, value)}
+                  >
+                    <SelectTrigger className={selectTriggerStyles}>
+                      <SelectValue>
+                        {exams.find(e => e.id === question.exam_id)?.name || "No exam"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className={selectContentStyles}>
+                      <SelectItem value="none">No exam</SelectItem>
+                      {exams.map((exam) => (
+                        <SelectItem key={exam.id} value={exam.id.toString()}>
+                          {exam.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>{new Date(question.created_at).toLocaleDateString("no-NO")}</div>
                 <div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
