@@ -35,6 +35,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchAvailableTags()
@@ -120,27 +121,27 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   }
 
   const handleBold = () => {
-    // Implement text formatting
+    document.execCommand('bold', false);
   }
 
   const handleItalic = () => {
-    // Implement text formatting
+    document.execCommand('italic', false);
   }
 
   const handleUnderline = () => {
-    // Implement text formatting
+    document.execCommand('underline', false);
   }
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
-    // Implement text alignment
+    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false);
   }
 
   const handleFontChange = (font: string) => {
-    // Implement font change
+    document.execCommand('fontName', false, font);
   }
 
   const handleSizeChange = (size: string) => {
-    // Implement size change
+    document.execCommand('fontSize', false, size);
   }
 
   const handleFileUpload = (type: 'image' | 'video' | 'file') => {
@@ -166,6 +167,12 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
       setAttachments([...attachments, newAttachment])
     }
   }
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className="bg-gray-50">
@@ -232,7 +239,13 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
       <div className="container mx-auto p-6 max-w-3xl">
         <div className="flex gap-6">
           <div className="flex-1">
-            <Input className="text-lg mb-8" placeholder="Enter your question description here..." />
+            <div
+              ref={editorRef}
+              contentEditable
+              data-placeholder="Enter your question description here..."
+              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+              style={{ lineHeight: '1.5' }}
+            />
 
             <div className="space-y-4">
               {["true", "false"].map((option) => (

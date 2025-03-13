@@ -27,6 +27,7 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [tags, setTags] = useState<string[]>(initialTags)
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const editorRef = useRef<HTMLDivElement>(null)
+  const answerEditorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchAvailableTags()
@@ -116,28 +117,35 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   }
 
   const handleBold = () => {
-    document.execCommand('bold', false)
+    document.execCommand('bold', false);
   }
 
   const handleItalic = () => {
-    document.execCommand('italic', false)
+    document.execCommand('italic', false);
   }
 
   const handleUnderline = () => {
-    document.execCommand('underline', false)
+    document.execCommand('underline', false);
   }
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
-    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false)
+    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false);
   }
 
   const handleFontChange = (font: string) => {
-    document.execCommand('fontName', false, font)
+    document.execCommand('fontName', false, font);
   }
 
   const handleSizeChange = (size: string) => {
-    document.execCommand('fontSize', false, size)
+    document.execCommand('fontSize', false, size);
   }
+
+  // Add this useEffect to ensure the editor is focusable
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className="bg-gray-50">
@@ -207,7 +215,22 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
             <div
               ref={editorRef}
               contentEditable
-              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              data-placeholder="Enter your question description here..."
+              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+              style={{ lineHeight: '1.5' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto p-6 max-w-3xl">
+        <div className="flex gap-6">
+          <div className="flex-1">
+            <div
+              ref={answerEditorRef}
+              contentEditable
+              data-placeholder="Enter your answer here..."
+              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               style={{ lineHeight: '1.5' }}
             />
           </div>

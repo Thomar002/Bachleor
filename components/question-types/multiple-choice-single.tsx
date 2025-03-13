@@ -46,6 +46,7 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchAvailableTags()
@@ -153,89 +154,27 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   }
 
   const handleBold = () => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) + `**${selectedText}**` + text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('bold', false);
   }
 
   const handleItalic = () => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) + `*${selectedText}*` + text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('italic', false);
   }
 
   const handleUnderline = () => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) + `__${selectedText}__` + text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('underline', false);
   }
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
-    if (questionTextareaRef.current) {
-      const text = questionTextareaRef.current.value
-      const start = questionTextareaRef.current.selectionStart
-      const textBeforeCursor = text.substring(0, start)
-      const textAfterCursor = text.substring(start)
-
-      const lastNewLine = textBeforeCursor.lastIndexOf('\n')
-      const nextNewLine = textAfterCursor.indexOf('\n')
-
-      const startPos = lastNewLine === -1 ? 0 : lastNewLine + 1
-      const endPos = nextNewLine === -1 ? text.length : start + nextNewLine
-
-      const newText = text.substring(0, startPos) +
-        `<div style="text-align: ${alignment}">` +
-        text.substring(startPos, endPos) +
-        '</div>' +
-        text.substring(endPos)
-
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false);
   }
 
   const handleFontChange = (font: string) => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) +
-        `<span style="font-family: ${font}">` +
-        selectedText +
-        '</span>' +
-        text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('fontName', false, font);
   }
 
   const handleSizeChange = (size: string) => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) +
-        `<span style="font-size: ${size}px">` +
-        selectedText +
-        '</span>' +
-        text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('fontSize', false, size);
   }
 
   const handleFileUpload = (type: 'image' | 'video' | 'file') => {
@@ -327,11 +266,12 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
       <div className="container mx-auto p-6 max-w-3xl">
         <div className="flex gap-6">
           <div className="flex-1">
-            <textarea
-              ref={questionTextareaRef}
-              className="w-full p-2 text-lg mb-8 border rounded"
-              placeholder="Enter your question description here..."
-              rows={4}
+            <div
+              ref={editorRef}
+              contentEditable
+              data-placeholder="Enter your question description here..."
+              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+              style={{ lineHeight: '1.5' }}
             />
 
             <div className="space-y-4">
@@ -362,27 +302,6 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               Add option
             </Button>
           </div>
-
-          {attachments.length > 0 && (
-            <div className="w-64 space-y-4">
-              <h2 className="font-medium">Attachments</h2>
-              {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2">
-                  {attachment.type === 'image' && (
-                    <img src={attachment.url} alt={attachment.name} className="w-full" />
-                  )}
-                  {attachment.type === 'video' && (
-                    <video src={attachment.url} controls className="w-full" />
-                  )}
-                  {attachment.type === 'file' && (
-                    <a href={attachment.url} download={attachment.name} className="text-blue-500 hover:underline">
-                      {attachment.name}
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
       <QuestionTypeDialog

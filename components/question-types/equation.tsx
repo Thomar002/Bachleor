@@ -41,6 +41,7 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const [answer, setAnswer] = useState("")
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
   const [attachments, setAttachments] = useState<Array<{ type: string; url: string }>>([])
+  const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchAvailableTags()
@@ -174,49 +175,34 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   }
 
   const handleBold = () => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) + `**${selectedText}**` + text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('bold', false);
   }
 
   const handleItalic = () => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) + `*${selectedText}*` + text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('italic', false);
   }
 
   const handleUnderline = () => {
-    if (questionTextareaRef.current) {
-      const start = questionTextareaRef.current.selectionStart
-      const end = questionTextareaRef.current.selectionEnd
-      const text = questionTextareaRef.current.value
-      const selectedText = text.substring(start, end)
-      const newText = text.substring(0, start) + `__${selectedText}__` + text.substring(end)
-      questionTextareaRef.current.value = newText
-    }
+    document.execCommand('underline', false);
   }
 
-  const handleAlign = (alignment: string) => {
-    // Implement text alignment
+  const handleAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
+    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false);
   }
 
   const handleFontChange = (font: string) => {
-    // Implement font change
+    document.execCommand('fontName', false, font);
   }
 
   const handleSizeChange = (size: string) => {
-    // Implement size change
+    document.execCommand('fontSize', false, size);
   }
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className="bg-gray-50">
@@ -282,10 +268,12 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
       <div className="container mx-auto p-6 max-w-3xl">
         <div className="flex gap-6">
           <div className="flex-1">
-            <Textarea
-              ref={questionTextareaRef}
-              className="text-lg mb-8"
-              placeholder="Enter your question description here..."
+            <div
+              ref={editorRef}
+              contentEditable
+              data-placeholder="Enter your question description here..."
+              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+              style={{ lineHeight: '1.5' }}
             />
             <div className="space-y-4">
               <div className="flex items-center gap-2">
