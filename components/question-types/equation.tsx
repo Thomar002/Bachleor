@@ -47,21 +47,37 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
     const fetchQuestionData = async () => {
       if (!questionId) return
 
-      const { data, error } = await supabase
-        .from("Questions")
-        .select("*")
-        .eq("id", questionId)
-        .single()
+      try {
+        const { data, error } = await supabase
+          .from("Questions")
+          .select("*")
+          .eq("id", questionId)
+          .single()
 
-      if (error) {
-        console.error("Error fetching question data:", error)
-        return
-      }
+        if (error) throw error
 
-      if (data) {
-        setDisplayName(data.display_name || "")
-        setEquation(data.question || "")
-        setAnswer(data.answer || "")
+        if (data) {
+          setDisplayName(data.display_name || "")
+          setEquation(data.question || "")
+
+          // Håndter correct_answer
+          if (data.correct_answer && Array.isArray(data.correct_answer) && data.correct_answer.length > 0) {
+            setAnswer(data.correct_answer[0].answer || "")
+          }
+
+          // Håndter tags
+          if (data.tags) {
+            const parsedTags = Array.isArray(data.tags)
+              ? data.tags
+              : typeof data.tags === 'string'
+                ? JSON.parse(data.tags)
+                : []
+            setTags(parsedTags)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching question:", error)
+        toast.error("Failed to load question")
       }
     }
 
@@ -77,8 +93,8 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
         .update({
           display_name: displayName,
           question: equation,
-          answer: answer,
-          type: ["Equation"] // Store as array to match the expected format
+          type: "Equation",
+          correct_answer: [{ answer: answer }]  // Matcher formatet til andre spørsmålstyper
         })
         .eq("id", questionId)
 
@@ -103,52 +119,56 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const fetchQuestionTags = async () => {
     if (!questionId) return
 
-    const { data, error } = await supabase
-      .from("Questions")
-      .select("tags")
-      .eq("id", questionId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("tags")
+        .eq("id", questionId)
+        .single()
 
-    if (error) {
+      if (error) throw error
+
+      if (data?.tags) {
+        const parsedTags = Array.isArray(data.tags)
+          ? data.tags
+          : typeof data.tags === 'string'
+            ? JSON.parse(data.tags)
+            : []
+        setTags(parsedTags)
+      }
+    } catch (error) {
       console.error("Error fetching question tags:", error)
-      return
-    }
-
-    if (data?.tags) {
-      const parsedTags = Array.isArray(data.tags)
-        ? data.tags
-        : typeof data.tags === 'string'
-          ? JSON.parse(data.tags)
-          : []
-      setTags(parsedTags)
+      // Ikke vis feilmelding til bruker siden dette ikke er kritisk
     }
   }
 
   const fetchAvailableTags = async () => {
-    const { data, error } = await supabase
-      .from("Questions")
-      .select("tags")
+    try {
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("tags")
 
-    if (error) {
-      console.error("Error fetching tags:", error)
-      return
-    }
+      if (error) throw error
 
-    const allTags = data
-      .flatMap(q => {
-        if (Array.isArray(q.tags)) return q.tags
-        if (typeof q.tags === 'string') {
-          try {
-            return JSON.parse(q.tags)
-          } catch {
-            return []
+      const allTags = (data || [])
+        .flatMap(q => {
+          if (Array.isArray(q.tags)) return q.tags
+          if (typeof q.tags === 'string') {
+            try {
+              return JSON.parse(q.tags)
+            } catch {
+              return []
+            }
           }
-        }
-        return []
-      })
-      .filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
+          return []
+        })
+        .filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
 
-    setAvailableTags([...new Set(allTags)])
+      setAvailableTags([...new Set(allTags)])
+    } catch (error) {
+      console.error("Error fetching available tags:", error)
+      // Ikke vis feilmelding til bruker siden dette ikke er kritisk
+    }
   }
 
   const handleTagsChange = async (newTags: string[]) => {
@@ -408,12 +428,10 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
             </div>
           )}
         </div>
-        <SaveQuestionButton
-          displayName={displayName}
-          question={equation}
-          type={"Equation" as QuestionType}
-          onSave={handleSave}
-        />
+
+        <div className="mt-4 flex justify-end">
+          <Button onClick={handleSave}>Save</Button>
+        </div>
       </div>
 
       <QuestionTypeDialog
