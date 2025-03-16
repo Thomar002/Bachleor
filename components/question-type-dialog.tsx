@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Circle, ThumbsUp, ThumbsDown, Type, FunctionSquare } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -74,7 +74,9 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-2xl mb-4">Question types</DialogTitle>
-          <p className="text-lg text-gray-600">Choose question type(s)</p>
+          <DialogDescription>
+            Select the type of question you want to create
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 mt-4">
           {questionTypes.map((type) => (

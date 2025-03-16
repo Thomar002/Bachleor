@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { TagDialog } from "../tag-dialog"
 import { useParams, useRouter } from "next/navigation"
 import { SaveQuestionButton } from "../save-question-button"
+import { toast } from "sonner"
 
 interface Props {
   questionName: string;
@@ -32,7 +33,6 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
 
   const handleEditorChange = () => {
     const content = answerEditorRef.current?.innerHTML || ""
-    console.log("Editor content updated:", content)
     setQuestionContent(content)
   }
 
@@ -251,6 +251,28 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
             displayName={displayName}
             question={questionContent}
             type="text"
+            onSave={async () => {
+              if (!questionId) return
+
+              try {
+                const { error } = await supabase
+                  .from("Questions")
+                  .update({
+                    display_name: displayName,
+                    question: questionContent,
+                    type: "text",  // Endret fra ["text"] til "text"
+                    tags: tags
+                  })
+                  .eq("id", questionId)
+
+                if (error) throw error
+
+                toast.success("Question saved successfully")
+              } catch (error) {
+                console.error("Error saving question:", error)
+                toast.error("Failed to save question")
+              }
+            }}
           />
         </div>
       </div>
