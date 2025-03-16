@@ -124,9 +124,22 @@ export default function QuestionList() {
     }
   }
 
-  const handleQuestionClick = (questionId: number, examId: number) => {
-    const defaultType = "text"
-    router.push(`/my-exams/${examId}/questions/${questionId}/${defaultType}`)
+  const handleQuestionClick = (questionId: number, examId: number, questionType: string[]) => {
+    // Map the question type to the correct route path
+    const typeToPath: Record<string, string> = {
+      "True/False": "true-false",
+      "Multiple Choice-single": "multiple-choice-single",
+      "Multiple Choice-multi": "multiple-choice-multiple",
+      "Equation": "equation",
+      "Text": "text"
+    }
+
+    // Get the first type from the array and map it to the correct path
+    // Default to "text" if no valid type is found
+    const type = questionType[0]
+    const path = typeToPath[type] || "text"
+
+    router.push(`/my-exams/${examId}/questions/${questionId}/${path}`)
   }
 
   const handleDeleteQuestion = async (questionId: number) => {
@@ -407,7 +420,7 @@ export default function QuestionList() {
                   />
                 </div>
                 <button
-                  onClick={() => handleQuestionClick(question.id, question.exam_id)}
+                  onClick={() => handleQuestionClick(question.id, question.exam_id, question.type)}
                   className="text-left hover:underline"
                 >
                   {question.name}
