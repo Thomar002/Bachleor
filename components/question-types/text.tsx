@@ -9,7 +9,7 @@ import { QuestionTypeDialog } from "../question-type-dialog"
 import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabaseClient"
 import { TagDialog } from "../tag-dialog"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 
 interface Props {
   questionName: string;
@@ -26,43 +26,37 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [type, setType] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>(initialTags)
   const [availableTags, setAvailableTags] = useState<string[]>([])
-  const editorRef = useRef<HTMLDivElement>(null)
   const answerEditorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const fetchQuestionData = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("*")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching question data:", error)
+        return
+      }
+
+      if (data) {
+        setDisplayName(data.display_name || "")
+        if (answerEditorRef.current) {
+          answerEditorRef.current.innerHTML = data.answer || ""
+        }
+        if (data.tags) {
+          setTags(Array.isArray(data.tags) ? data.tags : [])
+        }
+      }
+    }
+
+    fetchQuestionData()
     fetchAvailableTags()
-    // Set initial tags when they are provided
-    if (initialTags.length > 0) {
-      setTags(initialTags)
-    } else {
-      // Fetch tags for this question if initialTags is empty
-      fetchQuestionTags()
-    }
-  }, [initialTags])
-
-  const fetchQuestionTags = async () => {
-    if (!questionId) return
-
-    const { data, error } = await supabase
-      .from("Questions")
-      .select("tags")
-      .eq("id", questionId)
-      .single()
-
-    if (error) {
-      console.error("Error fetching question tags:", error)
-      return
-    }
-
-    if (data?.tags) {
-      const parsedTags = Array.isArray(data.tags)
-        ? data.tags
-        : typeof data.tags === 'string'
-          ? JSON.parse(data.tags)
-          : []
-      setTags(parsedTags)
-    }
-  }
+  }, [questionId])
 
   const fetchAvailableTags = async () => {
     const { data, error } = await supabase
@@ -140,12 +134,25 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     document.execCommand('fontSize', false, size);
   }
 
-  // Add this useEffect to ensure the editor is focusable
-  useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.focus();
+  const handleSaveQuestion = async () => {
+    if (!questionId) return
+
+    const updates = {
+      display_name: displayName,
+      answer: answerEditorRef.current?.innerHTML || "",
+      type: ["text"],
+      tags: tags
     }
-  }, []);
+
+    const { error } = await supabase
+      .from("Questions")
+      .update(updates)
+      .eq("id", questionId)
+
+    if (error) {
+      console.error("Error saving question:", error)
+    }
+  }
 
   return (
     <div className="bg-gray-50">
@@ -213,23 +220,9 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
         <div className="flex gap-6">
           <div className="flex-1">
             <div
-              ref={editorRef}
-              contentEditable
-              data-placeholder="Enter your question description here..."
-              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
-              style={{ lineHeight: '1.5' }}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto p-6 max-w-3xl">
-        <div className="flex gap-6">
-          <div className="flex-1">
-            <div
               ref={answerEditorRef}
               contentEditable
-              data-placeholder="Enter your answer here..."
+              data-placeholder="Enter your question here..."
               className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               style={{ lineHeight: '1.5' }}
             />
