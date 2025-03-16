@@ -92,11 +92,16 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
     fetchQuestionData()
   }, [questionId])
 
-  const handleEditorChange = () => {
-    if (editorRef.current) {
-      setQuestionContent(editorRef.current.innerHTML)
+  useEffect(() => {
+    if (editorRef.current && questionContent) {
+      editorRef.current.innerHTML = questionContent;
     }
-  }
+  }, []); // Kjører bare én gang ved innlasting
+
+  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const content = e.currentTarget.innerHTML;
+    setQuestionContent(content);
+  };
 
   const handleSave = async () => {
     if (!questionId) return
@@ -352,8 +357,9 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
-              dangerouslySetInnerHTML={{ __html: questionContent }}
-            />
+            >
+              {questionContent && <div dangerouslySetInnerHTML={{ __html: questionContent }} />}
+            </div>
 
             <div className="space-y-4">
               {options.map((option) => (

@@ -274,17 +274,16 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
     }
   }
 
-  const handleEditorChange = () => {
-    if (editorRef.current) {
-      setQuestionContent(editorRef.current.innerHTML)
-    }
-  }
+  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const content = e.currentTarget.innerHTML;
+    setQuestionContent(content);
+  };
 
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.focus();
+    if (editorRef.current && questionContent) {
+      editorRef.current.innerHTML = questionContent;
     }
-  }, []);
+  }, []); // Kjører bare én gang ved innlasting
 
   return (
     <div className="bg-gray-50">
@@ -362,7 +361,6 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
               className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
-              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
 
             <div className="space-y-4">

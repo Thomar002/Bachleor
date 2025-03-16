@@ -138,11 +138,16 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
     }
   }
 
-  const handleEditorChange = () => {
-    if (editorRef.current) {
-      setQuestionContent(editorRef.current.innerHTML)
+  useEffect(() => {
+    if (editorRef.current && questionContent) {
+      editorRef.current.innerHTML = questionContent;
     }
-  }
+  }, []); // Kjører bare én gang ved innlasting
+
+  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const content = e.currentTarget.innerHTML;
+    setQuestionContent(content);
+  };
 
   if (isLoading) {
     return <div className="p-4">Loading...</div>
@@ -211,7 +216,6 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
-              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
 
             <div className="mt-8 space-y-4">

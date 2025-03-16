@@ -31,10 +31,16 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const answerEditorRef = useRef<HTMLDivElement>(null)
 
-  const handleEditorChange = () => {
-    const content = answerEditorRef.current?.innerHTML || ""
-    setQuestionContent(content)
-  }
+  const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
+    const content = e.currentTarget.innerHTML;
+    setQuestionContent(content);
+  };
+
+  useEffect(() => {
+    if (answerEditorRef.current && questionContent) {
+      answerEditorRef.current.innerHTML = questionContent;
+    }
+  }, []); // Kjører bare én gang ved innlasting
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -241,7 +247,6 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
-              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
           </div>
         </div>
