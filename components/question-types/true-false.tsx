@@ -9,7 +9,9 @@ import { QuestionTypeDialog } from "../question-type-dialog"
 import { TagDialog } from "../tag-dialog"
 import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabaseClient"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
+import { SaveQuestionButton } from "../save-question-button"
+import { toast } from "sonner"
 
 interface Attachment {
   type: 'image' | 'video' | 'file';
@@ -26,160 +28,88 @@ interface Props {
 export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Props) {
   const params = useParams()
   const questionId = params.questionId as string
+  const router = useRouter()
+
+  const [isLoading, setIsLoading] = useState(true)
   const [displayName, setDisplayName] = useState("")
-  const [correctAnswer, setCorrectAnswer] = useState<"true" | "false" | null>(null)
+  const [questionContent, setQuestionContent] = useState("")
+  const [correctAnswer, setCorrectAnswer] = useState<boolean | null>(null)
+  const [type, setType] = useState(["True/False"])
+  const [tags, setTags] = useState<string[]>(initialTags)
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false)
-  const [type, setType] = useState<string[]>([])
-  const [tags, setTags] = useState<string[]>(initialTags)
   const [availableTags, setAvailableTags] = useState<string[]>([])
-  const [attachments, setAttachments] = useState<Attachment[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetchAvailableTags()
-    if (initialTags.length > 0) {
-      setTags(initialTags)
-    } else {
-      fetchQuestionTags()
-    }
-  }, [initialTags])
+    const fetchQuestionData = async () => {
+      if (!questionId) return
 
-  const fetchQuestionTags = async () => {
-    if (!questionId) return
+      try {
+        const { data, error } = await supabase
+          .from("Questions")
+          .select("*")
+          .eq("id", questionId)
+          .single()
 
-    const { data, error } = await supabase
-      .from("Questions")
-      .select("tags")
-      .eq("id", questionId)
-      .single()
+        if (error) throw error
 
-    if (error) {
-      console.error("Error fetching question tags:", error)
-      return
-    }
-
-    if (data?.tags) {
-      const parsedTags = Array.isArray(data.tags)
-        ? data.tags
-        : typeof data.tags === 'string'
-          ? JSON.parse(data.tags)
-          : []
-      setTags(parsedTags)
-    }
-  }
-
-  const fetchAvailableTags = async () => {
-    const { data, error } = await supabase
-      .from("Questions")
-      .select("tags")
-
-    if (error) {
-      console.error("Error fetching tags:", error)
-      return
-    }
-
-    const allTags = data
-      .flatMap(q => {
-        if (Array.isArray(q.tags)) return q.tags
-        if (typeof q.tags === 'string') {
-          try {
-            return JSON.parse(q.tags)
-          } catch {
-            return []
+        if (data) {
+          setDisplayName(data.display_name || "")
+          setQuestionContent(data.question || "")
+          if (editorRef.current) {
+            editorRef.current.innerHTML = data.question || ""
           }
         }
-        return []
-      })
-      .filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
+      } catch (error) {
+        console.error("Error fetching question:", error)
+        toast.error("Failed to load question")
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-    setAvailableTags([...new Set(allTags)])
-  }
+    fetchQuestionData()
+  }, [questionId])
 
-  const handleTagsChange = async (newTags: string[]) => {
+  const handleSave = async () => {
     if (!questionId) return
 
-    setTags(newTags)
+    try {
+      const { error } = await supabase
+        .from("Questions")
+        .update({
+          display_name: displayName,
+          question: questionContent,
+          type: "True/False"
+        })
+        .eq("id", questionId)
 
-    const { error } = await supabase
-      .from("Questions")
-      .update({ tags: newTags })
-      .eq("id", questionId)
+      if (error) throw error
 
-    if (error) {
-      console.error("Error updating tags:", error)
-      return
-    }
-
-    onTagsChange?.(newTags)
-  }
-
-  const handleTypeChange = (newTypes: string[]) => {
-    setType(newTypes)
-    setIsTypeDialogOpen(false)
-  }
-
-  const handleBold = () => {
-    document.execCommand('bold', false);
-  }
-
-  const handleItalic = () => {
-    document.execCommand('italic', false);
-  }
-
-  const handleUnderline = () => {
-    document.execCommand('underline', false);
-  }
-
-  const handleAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
-    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false);
-  }
-
-  const handleFontChange = (font: string) => {
-    document.execCommand('fontName', false, font);
-  }
-
-  const handleSizeChange = (size: string) => {
-    document.execCommand('fontSize', false, size);
-  }
-
-  const handleFileUpload = (type: 'image' | 'video' | 'file') => {
-    if (fileInputRef.current) {
-      fileInputRef.current.accept = type === 'image' ? 'image/*' :
-        type === 'video' ? 'video/*' :
-          '*/*'
-      fileInputRef.current.click()
+      toast.success("Question saved successfully")
+    } catch (error) {
+      console.error("Error saving question:", error)
+      toast.error("Failed to save question")
     }
   }
 
-  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      const url = URL.createObjectURL(file)
-      const newAttachment: Attachment = {
-        type: file.type.startsWith('image/') ? 'image' :
-          file.type.startsWith('video/') ? 'video' :
-            'file',
-        url,
-        name: file.name
-      }
-      setAttachments([...attachments, newAttachment])
-    }
-  }
-
-  useEffect(() => {
+  const handleEditorChange = () => {
     if (editorRef.current) {
-      editorRef.current.focus();
+      setQuestionContent(editorRef.current.innerHTML)
     }
-  }, []);
+  }
+
+  if (isLoading) {
+    return <div className="p-4">Loading...</div>
+  }
 
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
         <div className="p-4">
           <h1 className="text-xl font-semibold mb-4">{questionName}</h1>
-          <Separator className="my-4" />
           <div className="flex gap-4">
             <div className="flex flex-col items-center">
               <Button
@@ -198,24 +128,9 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               <Tag className="h-5 w-5" />
               Tags ({tags.length})
             </Button>
-            <div className="flex flex-col items-center">
-              <Button className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                AI creator
-              </Button>
-              <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
-            </div>
-          </div>
-          {/* Display current tags */}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                {tag}
-              </div>
-            ))}
           </div>
         </div>
-        {/* Display name section */}
+
         <div className="px-4 pb-4">
           <div className="max-w-md mx-auto">
             <h2 className="text-sm font-medium text-gray-700 mb-2">Display name</h2>
@@ -227,17 +142,6 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
             />
           </div>
         </div>
-        <EditorToolbar
-          onBold={handleBold}
-          onItalic={handleItalic}
-          onUnderline={handleUnderline}
-          onAlign={handleAlign}
-          onFontChange={handleFontChange}
-          onSizeChange={handleSizeChange}
-          onImageUpload={() => handleFileUpload('image')}
-          onVideoUpload={() => handleFileUpload('video')}
-          onFileUpload={() => handleFileUpload('file')}
-        />
       </div>
 
       <div className="container mx-auto p-6 max-w-3xl">
@@ -248,66 +152,71 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               ref={editorRef}
               contentEditable
               data-placeholder="Enter your question here..."
-              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               style={{ lineHeight: '1.5' }}
+              onInput={handleEditorChange}
+              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
 
-            <div className="space-y-4">
-              {["true", "false"].map((option) => (
-                <div key={option} className="flex items-center gap-4">
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1 flex items-center gap-4">
                   <div
-                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === option ? "border-green-500 bg-green-500" : "border-gray-300"
+                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === true ? "border-green-500 bg-green-500" : "border-gray-300"
                       }`}
-                    onClick={() => setCorrectAnswer(option as "true" | "false")}
+                    onClick={() => setCorrectAnswer(true)}
                   >
-                    {correctAnswer === option && <Check className="h-4 w-4 text-white" />}
+                    {correctAnswer === true && <Check className="h-4 w-4 text-white" />}
                   </div>
-                  <span className="capitalize">{option}</span>
+                  <span>True</span>
                 </div>
-              ))}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1 flex items-center gap-4">
+                  <div
+                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === false ? "border-green-500 bg-green-500" : "border-gray-300"
+                      }`}
+                    onClick={() => setCorrectAnswer(false)}
+                  >
+                    {correctAnswer === false && <Check className="h-4 w-4 text-white" />}
+                  </div>
+                  <span>False</span>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          {attachments.length > 0 && (
-            <div className="w-64 space-y-4">
-              <h2 className="font-medium">Attachments</h2>
-              {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2">
-                  {attachment.type === 'image' && (
-                    <img src={attachment.url} alt={attachment.name} className="w-full" />
-                  )}
-                  {attachment.type === 'video' && (
-                    <video src={attachment.url} controls className="w-full" />
-                  )}
-                  {attachment.type === 'file' && (
-                    <a href={attachment.url} download={attachment.name} className="text-blue-500 hover:underline">
-                      {attachment.name}
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="mt-4 flex justify-end">
+          <SaveQuestionButton
+            displayName={displayName}
+            question={questionContent}
+            type={"True/False" as QuestionType}
+            onSave={handleSave}
+          />
         </div>
       </div>
+
       <QuestionTypeDialog
         open={isTypeDialogOpen}
         onOpenChange={setIsTypeDialogOpen}
-        onTypeSelect={handleTypeChange}
+        onTypeSelect={(newTypes) => {
+          setType(newTypes)
+          setIsTypeDialogOpen(false)
+        }}
         currentTypes={type}
       />
+
       <TagDialog
         open={isTagDialogOpen}
         onOpenChange={setIsTagDialogOpen}
         currentTags={tags}
         availableTags={availableTags}
-        onTagsChange={handleTagsChange}
-      />
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        onChange={handleFileSelected}
+        onTagsChange={(newTags) => {
+          setTags(newTags)
+          onTagsChange?.(newTags)
+        }}
       />
     </div>
   )
