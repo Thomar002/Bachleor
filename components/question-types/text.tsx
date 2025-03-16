@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabaseClient"
 import { TagDialog } from "../tag-dialog"
 import { useParams, useRouter } from "next/navigation"
+import { SaveQuestionButton } from "../save-question-button"
 
 interface Props {
   questionName: string;
@@ -232,6 +233,12 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
             />
           </div>
         </div>
+
+        <SaveQuestionButton
+          displayName={displayName}
+          question={answerEditorRef.current?.innerHTML || ""}
+          type="text"
+        />
       </div>
 
       <QuestionTypeDialog

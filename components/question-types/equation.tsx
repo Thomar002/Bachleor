@@ -3,14 +3,10 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Menu, Bot, Plus, Divide, Square, Tag } from "lucide-react"
-import { EditorToolbar } from "@/components/editor-toolbar"
-import { QuestionTypeDialog } from "@/components/question-type-dialog"
-import { TagDialog } from "@/components/tag-dialog"
+import { Menu, Bot, Plus } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
-import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
+import { SaveQuestionButton } from "../save-question-button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,11 +23,10 @@ interface Props {
 }
 
 export function Equation({ questionName, initialTags = [], onTagsChange }: Props) {
-  const router = useRouter()
   const params = useParams()
   const questionId = params.questionId as string
 
-  const [displayName, setDisplayName] = useState(questionName)
+  const [displayName, setDisplayName] = useState("")
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false)
   const [type, setType] = useState<string[]>([])
@@ -42,6 +37,57 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
   const [attachments, setAttachments] = useState<Array<{ type: string; url: string }>>([])
   const editorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const fetchQuestionData = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("*")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching question data:", error)
+        return
+      }
+
+      if (data) {
+        setDisplayName(data.display_name || "")
+        setEquation(data.question || "")
+        setAnswer(data.answer || "")
+      }
+    }
+
+    fetchQuestionData()
+  }, [questionId])
+
+  const handleSave = async () => {
+    if (!questionId) {
+      console.error("No questionId available")
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from("Questions")
+        .update({
+          display_name: displayName,
+          question: equation,
+          answer: answer
+        })
+        .eq("id", questionId)
+
+      if (error) {
+        throw error
+      }
+
+      console.log("Question saved successfully")
+    } catch (error) {
+      console.error("Error saving question:", error)
+    }
+  }
 
   useEffect(() => {
     fetchAvailableTags()
@@ -360,6 +406,11 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
             </div>
           )}
         </div>
+        <SaveQuestionButton
+          displayName={displayName}
+          question={equation}
+          type="equation"
+        />
       </div>
 
       <QuestionTypeDialog

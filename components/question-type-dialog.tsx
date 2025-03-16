@@ -25,7 +25,7 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
       path: "text"
     },
     {
-      id: "true-false",
+      id: "True/False",
       name: "True or false",
       icons: (
         <div className="flex gap-4">
@@ -36,19 +36,19 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
       path: "true-false"
     },
     {
-      id: "multiple-choice-single",
+      id: "Multiple Choice-single",
       name: "Multiple choice (single answer)",
       icon: <CheckCircle className="w-8 h-8" />,
       path: "multiple-choice-single"
     },
     {
-      id: "multiple-choice-multiple",
+      id: "Multiple Choice-multi",
       name: "Multiple choice (multiple answers)",
       icon: <Circle className="w-8 h-8" />,
       path: "multiple-choice-multiple"
     },
     {
-      id: "equation",
+      id: "Equation",
       name: "Equation",
       icon: <FunctionSquare className="w-8 h-8" />,
       path: "equation"

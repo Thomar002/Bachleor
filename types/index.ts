@@ -1,3 +1,10 @@
+export type QuestionType =
+  | "text"
+  | "True/False"
+  | "Multiple Choice-single"
+  | "Multiple Choice-multi"
+  | "Equation";
+
 export interface Exam {
   id: string
   name: string
