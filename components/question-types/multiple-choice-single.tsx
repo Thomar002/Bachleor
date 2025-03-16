@@ -349,7 +349,7 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               ref={editorRef}
               contentEditable
               data-placeholder="Enter your question here..."
-              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+              className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
               dangerouslySetInnerHTML={{ __html: questionContent }}
