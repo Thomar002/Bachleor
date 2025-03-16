@@ -272,65 +272,47 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
       <div className="container mx-auto p-6 max-w-3xl">
         <div className="flex gap-6">
           <div className="flex-1">
-            <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
-            <div
-              ref={editorRef}
-              contentEditable
-              data-placeholder="Enter your question here..."
-              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
-              style={{ lineHeight: '1.5' }}
-            />
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <h2 className="font-medium">Equation Editor</h2>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Insert Symbol
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <ScrollArea className="h-[300px]">
-                      <DropdownMenuGroup>
-                        {equationSymbols.map((item) => (
-                          <DropdownMenuItem
-                            key={item.symbol}
-                            onClick={() => insertSymbol(item.symbol)}
-                          >
-                            <span className="flex items-center">
-                              {item.icon && <span className="mr-2">{item.icon}</span>}
-                              {item.label} ({item.symbol})
-                            </span>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuGroup>
-                    </ScrollArea>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="border rounded-lg p-4">
+            <div className="space-y-8"> {/* Changed from space-y-4 to space-y-8 */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-medium text-gray-700">Question</h2>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Insert Symbol
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                      <ScrollArea className="h-[300px]">
+                        <DropdownMenuGroup>
+                          {equationSymbols.map((item) => (
+                            <DropdownMenuItem
+                              key={item.symbol}
+                              onClick={() => setEquation(prev => prev + item.symbol)}
+                            >
+                              <span className="flex items-center">
+                                {item.icon && <span className="mr-2">{item.icon}</span>}
+                                {item.label} ({item.symbol})
+                              </span>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuGroup>
+                      </ScrollArea>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <Input
                   value={equation}
                   onChange={(e) => setEquation(e.target.value)}
-                  placeholder="Click 'Insert Symbol' to add mathematical symbols"
+                  placeholder="Enter your question here..."
                   className="font-mono"
                 />
-                <div className="mt-2 p-4 bg-gray-100 rounded text-lg">
-                  Preview: {equation}
-                </div>
               </div>
 
-              <div className="space-y-4">
-                <h2 className="font-medium">Correct Answer</h2>
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Input
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="Enter the correct answer"
-                    className="font-mono"
-                  />
+                  <h2 className="text-sm font-medium text-gray-700">Correct Answer</h2>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -357,9 +339,12 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <div className="mt-2 p-4 bg-gray-100 rounded text-lg">
-                  Preview: {answer}
-                </div>
+                <Input
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder="Enter the correct answer"
+                  className="font-mono"
+                />
               </div>
             </div>
           </div>
