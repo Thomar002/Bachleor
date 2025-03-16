@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useParams, useRouter } from "next/navigation"
 import { SaveQuestionButton } from "../save-question-button"
 import { toast } from "sonner"
+import { QuestionType } from "@/types"
 
 interface Attachment {
   type: 'image' | 'video' | 'file';
@@ -61,6 +62,14 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
           if (editorRef.current) {
             editorRef.current.innerHTML = data.question || ""
           }
+
+          // Parse correct_answer fra databasen
+          if (data.correct_answer && data.correct_answer.length > 0) {
+            const answer = data.correct_answer[0]?.answer
+            setCorrectAnswer(typeof answer === 'boolean' ? answer : null)
+          } else {
+            setCorrectAnswer(null)
+          }
         }
       } catch (error) {
         console.error("Error fetching question:", error)
@@ -77,12 +86,16 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
     if (!questionId) return
 
     try {
+      // Konverterer boolean til et JSON-array format som passer jsonb[]
+      const correctAnswerJson = correctAnswer !== null ? [{ answer: correctAnswer }] : []
+
       const { error } = await supabase
         .from("Questions")
         .update({
           display_name: displayName,
           question: questionContent,
-          type: "True/False"
+          type: "True/False",
+          correct_answer: correctAnswerJson
         })
         .eq("id", questionId)
 
@@ -192,7 +205,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
           <SaveQuestionButton
             displayName={displayName}
             question={questionContent}
-            type={"True/False" as QuestionType}
+            type="True/False"
             onSave={handleSave}
           />
         </div>
