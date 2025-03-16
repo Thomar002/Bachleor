@@ -72,17 +72,43 @@ export default function QuestionList() {
         return acc
       }, {} as Record<string, string>)
 
-      const formattedQuestions = questionsData.map(question => ({
-        id: question.id,
-        name: question.name || "Unnamed Question",
-        type: Array.isArray(question.type) ? question.type : [],
-        exam_id: question.exam_id,
-        exam_name: examMap[question.exam_id] || "No exam",
-        created_at: question.created_at,
-        tags: question.tags === null ? [] :
-          Array.isArray(question.tags) ? question.tags :
-            typeof question.tags === 'string' ? JSON.parse(question.tags) : []
-      }))
+      const formattedQuestions = questionsData.map(question => {
+        // Safely handle type field
+        let questionType = [];
+        try {
+          if (typeof question.type === 'string') {
+            questionType = [question.type];
+          } else if (Array.isArray(question.type)) {
+            questionType = question.type;
+          }
+        } catch (e) {
+          console.error('Error parsing question type:', e);
+        }
+
+        // Safely handle tags field
+        let questionTags = [];
+        try {
+          if (question.tags === null) {
+            questionTags = [];
+          } else if (Array.isArray(question.tags)) {
+            questionTags = question.tags;
+          } else if (typeof question.tags === 'string') {
+            questionTags = JSON.parse(question.tags);
+          }
+        } catch (e) {
+          console.error('Error parsing tags:', e);
+        }
+
+        return {
+          id: question.id,
+          name: question.name || "Unnamed Question",
+          type: questionType,
+          exam_id: question.exam_id,
+          exam_name: examMap[question.exam_id] || "No exam",
+          created_at: question.created_at,
+          tags: questionTags
+        };
+      });
 
       setQuestions(formattedQuestions)
 

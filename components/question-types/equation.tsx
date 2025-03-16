@@ -1,12 +1,17 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Menu, Bot, Plus } from "lucide-react"
+import { Menu, Bot, Plus, Square, Tag, Divide } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
-import { useParams } from "next/navigation"
 import { SaveQuestionButton } from "../save-question-button"
+import { QuestionTypeDialog } from "../question-type-dialog"
+import { TagDialog } from "../tag-dialog"
+import { EditorToolbar } from "../editor-toolbar"
+import { toast } from "sonner"
+import { QuestionType } from "@/types"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,12 +22,13 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface Props {
-  questionName: string;
-  initialTags?: string[];
-  onTagsChange?: (tags: string[]) => void;
+  questionName: string
+  initialTags?: string[]
+  onTagsChange?: (tags: string[]) => void
 }
 
 export function Equation({ questionName, initialTags = [], onTagsChange }: Props) {
+  const router = useRouter()
   const params = useParams()
   const questionId = params.questionId as string
 
@@ -34,9 +40,8 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [equation, setEquation] = useState("")
   const [answer, setAnswer] = useState("")
-  const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
-  const [attachments, setAttachments] = useState<Array<{ type: string; url: string }>>([])
   const editorRef = useRef<HTMLDivElement>(null)
+  const [attachments, setAttachments] = useState<Array<{ type: string; url: string }>>([])
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -64,10 +69,7 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   }, [questionId])
 
   const handleSave = async () => {
-    if (!questionId) {
-      console.error("No questionId available")
-      return
-    }
+    if (!questionId) return
 
     try {
       const { error } = await supabase
@@ -75,17 +77,17 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
         .update({
           display_name: displayName,
           question: equation,
-          answer: answer
+          answer: answer,
+          type: ["Equation"] // Store as array to match the expected format
         })
         .eq("id", questionId)
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
-      console.log("Question saved successfully")
+      toast.success("Question saved successfully")
     } catch (error) {
       console.error("Error saving question:", error)
+      toast.error("Failed to save question")
     }
   }
 
@@ -409,7 +411,8 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
         <SaveQuestionButton
           displayName={displayName}
           question={equation}
-          type="equation"
+          type={"Equation" as QuestionType}
+          onSave={handleSave}
         />
       </div>
 
