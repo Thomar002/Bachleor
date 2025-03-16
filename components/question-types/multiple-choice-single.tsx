@@ -242,13 +242,16 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
             ))}
           </div>
         </div>
+        {/* Display name section */}
         <div className="px-4 pb-4">
-          <Input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Enter display name..."
-            className="max-w-md mx-auto"
-          />
+          <div className="max-w-md mx-auto">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">Display name</h2>
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Enter display name..."
+            />
+          </div>
         </div>
         <EditorToolbar
           onBold={handleBold}
@@ -266,10 +269,11 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
       <div className="container mx-auto p-6 max-w-3xl">
         <div className="flex gap-6">
           <div className="flex-1">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
               ref={editorRef}
               contentEditable
-              data-placeholder="Enter your question description here..."
+              data-placeholder="Enter your question here..."
               className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
               style={{ lineHeight: '1.5' }}
             />

@@ -195,13 +195,16 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
             ))}
           </div>
         </div>
+        {/* Display name section */}
         <div className="px-4 pb-4">
-          <Input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Enter display name..."
-            className="max-w-md mx-auto"
-          />
+          <div className="max-w-md mx-auto">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">Display name</h2>
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Enter display name..."
+            />
+          </div>
         </div>
         <EditorToolbar
           onBold={handleBold}
@@ -219,6 +222,7 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
       <div className="container mx-auto p-6 max-w-3xl">
         <div className="flex gap-6">
           <div className="flex-1">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
               ref={answerEditorRef}
               contentEditable
