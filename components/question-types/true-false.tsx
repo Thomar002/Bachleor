@@ -43,6 +43,36 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
 
   const editorRef = useRef<HTMLDivElement>(null)
 
+  // Legg til disse funksjonene for rik-tekst-redigering
+  const handleBold = () => {
+    document.execCommand('bold', false)
+  }
+
+  const handleItalic = () => {
+    document.execCommand('italic', false)
+  }
+
+  const handleUnderline = () => {
+    document.execCommand('underline', false)
+  }
+
+  const handleAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
+    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false)
+  }
+
+  const handleFontChange = (font: string) => {
+    document.execCommand('fontName', false, font)
+  }
+
+  const handleSizeChange = (size: string) => {
+    document.execCommand('fontSize', false, size)
+  }
+
+  const handleFileUpload = (type: 'image' | 'video' | 'file') => {
+    // Implementer filopplasting her hvis det trengs
+    console.log('File upload not implemented:', type)
+  }
+
   useEffect(() => {
     const fetchQuestionData = async () => {
       if (!questionId) return
@@ -155,6 +185,19 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
             />
           </div>
         </div>
+
+        {/* Legg til EditorToolbar her */}
+        <EditorToolbar
+          onBold={handleBold}
+          onItalic={handleItalic}
+          onUnderline={handleUnderline}
+          onAlign={handleAlign}
+          onFontChange={handleFontChange}
+          onSizeChange={handleSizeChange}
+          onImageUpload={() => handleFileUpload('image')}
+          onVideoUpload={() => handleFileUpload('video')}
+          onFileUpload={() => handleFileUpload('file')}
+        />
       </div>
 
       <div className="container mx-auto p-6 max-w-3xl">
