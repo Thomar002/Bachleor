@@ -10,6 +10,7 @@ import { QuestionTypeDialog } from "../question-type-dialog"
 import { TagDialog } from "../tag-dialog"
 import { supabase } from "@/lib/supabaseClient"
 import { useParams } from "next/navigation"
+import { toast } from 'sonner'
 
 interface Option {
   id: string
@@ -47,15 +48,93 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   const fileInputRef = useRef<HTMLInputElement>(null)
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  const [questionContent, setQuestionContent] = useState("")
 
   useEffect(() => {
-    fetchAvailableTags()
-    if (initialTags.length > 0) {
-      setTags(initialTags)
-    } else {
-      fetchQuestionTags()
+    const fetchQuestionData = async () => {
+      if (!questionId) return
+
+      try {
+        const { data, error } = await supabase
+          .from("Questions")
+          .select("*")
+          .eq("id", questionId)
+          .single()
+
+        if (error) throw error
+
+        if (data) {
+          setDisplayName(data.display_name || "")
+          setQuestionContent(data.question || "")
+          if (editorRef.current) {
+            editorRef.current.innerHTML = data.question || ""
+          }
+
+          // Parse options og correct_answer fra databasen
+          if (data.options && Array.isArray(data.options)) {
+            const correctAnswerId = data.correct_answer?.[0]?.id
+
+            const parsedOptions = data.options.map((opt: any) => ({
+              id: opt.id,
+              text: opt.text,
+              isCorrect: opt.id === correctAnswerId
+            }))
+
+            setOptions(parsedOptions)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching question:", error)
+        toast.error("Failed to load question")
+      }
     }
-  }, [initialTags])
+
+    fetchQuestionData()
+  }, [questionId])
+
+  const handleEditorChange = () => {
+    if (editorRef.current) {
+      setQuestionContent(editorRef.current.innerHTML)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!questionId) return
+
+    try {
+      // Finn det korrekte svaret (option som har isCorrect = true)
+      const correctOption = options.find(opt => opt.isCorrect)
+
+      // Konverter options til format for options-kolonnen (uten isCorrect flag)
+      const optionsJson = options.map(opt => ({
+        id: opt.id,
+        text: opt.text
+      }))
+
+      // Lag correct_answer format (array med ett element siden det er single choice)
+      const correctAnswerJson = correctOption
+        ? [{ id: correctOption.id, answer: correctOption.text }]
+        : []
+
+      const { error } = await supabase
+        .from("Questions")
+        .update({
+          display_name: displayName,
+          question: questionContent,
+          type: "Multiple Choice-single",
+          options: optionsJson,
+          correct_answer: correctAnswerJson
+        })
+        .eq("id", questionId)
+
+      if (error) throw error
+
+      toast.success("Question saved successfully")
+    } catch (error) {
+      console.error("Error saving question:", error)
+      toast.error("Failed to save question")
+    }
+  }
 
   const fetchQuestionTags = async () => {
     if (!questionId) return
@@ -154,36 +233,31 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   }
 
   const handleBold = () => {
-    document.execCommand('bold', false);
+    document.execCommand('bold', false)
   }
 
   const handleItalic = () => {
-    document.execCommand('italic', false);
+    document.execCommand('italic', false)
   }
 
   const handleUnderline = () => {
-    document.execCommand('underline', false);
+    document.execCommand('underline', false)
   }
 
   const handleAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
-    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false);
+    document.execCommand(`justify${alignment.charAt(0).toUpperCase() + alignment.slice(1)}`, false)
   }
 
   const handleFontChange = (font: string) => {
-    document.execCommand('fontName', false, font);
+    document.execCommand('fontName', false, font)
   }
 
   const handleSizeChange = (size: string) => {
-    document.execCommand('fontSize', false, size);
+    document.execCommand('fontSize', false, size)
   }
 
   const handleFileUpload = (type: 'image' | 'video' | 'file') => {
-    if (fileInputRef.current) {
-      fileInputRef.current.accept = type === 'image' ? 'image/*' :
-        type === 'video' ? 'video/*' :
-          '*/*'
-      fileInputRef.current.click()
-    }
+    console.log('File upload not implemented:', type)
   }
 
   const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,6 +324,7 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Enter display name..."
+              className="max-w-md mx-auto"
             />
           </div>
         </div>
@@ -274,8 +349,10 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               ref={editorRef}
               contentEditable
               data-placeholder="Enter your question here..."
-              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               style={{ lineHeight: '1.5' }}
+              onInput={handleEditorChange}
+              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
 
             <div className="space-y-4">
@@ -306,6 +383,11 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               Add option
             </Button>
           </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button onClick={handleSave}>Save</Button>
+
         </div>
       </div>
       <QuestionTypeDialog
