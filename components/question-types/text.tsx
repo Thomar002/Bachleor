@@ -22,12 +22,19 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const params = useParams()
   const questionId = params.questionId as string
   const [displayName, setDisplayName] = useState("")
+  const [questionContent, setQuestionContent] = useState("")
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false)
   const [type, setType] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>(initialTags)
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const answerEditorRef = useRef<HTMLDivElement>(null)
+
+  const handleEditorChange = () => {
+    const content = answerEditorRef.current?.innerHTML || ""
+    console.log("Editor content updated:", content)
+    setQuestionContent(content)
+  }
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -46,8 +53,11 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
 
       if (data) {
         setDisplayName(data.display_name || "")
+        // Update both the state and the editor content
+        const questionText = data.question || ""
+        setQuestionContent(questionText)
         if (answerEditorRef.current) {
-          answerEditorRef.current.innerHTML = data.answer || ""
+          answerEditorRef.current.innerHTML = questionText
         }
         if (data.tags) {
           setTags(Array.isArray(data.tags) ? data.tags : [])
@@ -230,15 +240,19 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               data-placeholder="Enter your question here..."
               className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
               style={{ lineHeight: '1.5' }}
+              onInput={handleEditorChange}
+              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
           </div>
         </div>
 
-        <SaveQuestionButton
-          displayName={displayName}
-          question={answerEditorRef.current?.innerHTML || ""}
-          type="text"
-        />
+        <div className="mt-4 flex justify-end">
+          <SaveQuestionButton
+            displayName={displayName}
+            question={questionContent}
+            type="text"
+          />
+        </div>
       </div>
 
       <QuestionTypeDialog
