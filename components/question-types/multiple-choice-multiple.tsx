@@ -10,6 +10,7 @@ import { TagDialog } from "../tag-dialog"
 import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabaseClient"
 import { useParams } from "next/navigation"
+import { toast } from "sonner"
 
 interface Option {
   id: string
@@ -46,15 +47,88 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  const [questionContent, setQuestionContent] = useState("")
+
+  const handleSave = async () => {
+    if (!questionId) return
+
+    try {
+      // Finn alle korrekte svar (options som har isCorrect = true)
+      const correctOptions = options.filter(opt => opt.isCorrect)
+
+      // Konverter options til format for options-kolonnen (uten isCorrect flag)
+      const optionsJson = options.map(opt => ({
+        id: opt.id,
+        text: opt.text
+      }))
+
+      // Lag correct_answer format (array med alle korrekte svar)
+      const correctAnswerJson = correctOptions.map(opt => ({
+        id: opt.id,
+        answer: opt.text
+      }))
+
+      const { error } = await supabase
+        .from("Questions")
+        .update({
+          display_name: displayName,
+          question: questionContent,
+          type: "Multiple Choice-multi",
+          options: optionsJson,
+          correct_answer: correctAnswerJson
+        })
+        .eq("id", questionId)
+
+      if (error) throw error
+
+      toast.success("Question saved successfully")
+    } catch (error) {
+      console.error("Error saving question:", error)
+      toast.error("Failed to save question")
+    }
+  }
 
   useEffect(() => {
-    fetchAvailableTags()
-    if (initialTags.length > 0) {
-      setTags(initialTags)
-    } else {
-      fetchQuestionTags()
+    const fetchQuestionData = async () => {
+      if (!questionId) return
+
+      try {
+        const { data, error } = await supabase
+          .from("Questions")
+          .select("*")
+          .eq("id", questionId)
+          .single()
+
+        if (error) throw error
+
+        if (data) {
+          setDisplayName(data.display_name || "")
+          setQuestionContent(data.question || "")
+          if (editorRef.current) {
+            editorRef.current.innerHTML = data.question || ""
+          }
+
+          // Parse options og correct_answer fra databasen
+          if (data.options && Array.isArray(data.options)) {
+            const correctAnswerIds = data.correct_answer?.map((ans: any) => ans.id) || []
+
+            const parsedOptions = data.options.map((opt: any) => ({
+              id: opt.id,
+              text: opt.text,
+              isCorrect: correctAnswerIds.includes(opt.id)
+            }))
+
+            setOptions(parsedOptions)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching question:", error)
+        toast.error("Failed to load question")
+      }
     }
-  }, [initialTags])
+
+    fetchQuestionData()
+  }, [questionId])
 
   const fetchQuestionTags = async () => {
     if (!questionId) return
@@ -200,6 +274,12 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
     }
   }
 
+  const handleEditorChange = () => {
+    if (editorRef.current) {
+      setQuestionContent(editorRef.current.innerHTML)
+    }
+  }
+
   useEffect(() => {
     if (editorRef.current) {
       editorRef.current.focus();
@@ -279,8 +359,10 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
               ref={editorRef}
               contentEditable
               data-placeholder="Enter your question here..."
-              className="min-h-[50px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+              className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
               style={{ lineHeight: '1.5' }}
+              onInput={handleEditorChange}
+              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
 
             <div className="space-y-4">
@@ -332,6 +414,10 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
               ))}
             </div>
           )}
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button onClick={handleSave}>Save</Button>
         </div>
       </div>
       <QuestionTypeDialog
