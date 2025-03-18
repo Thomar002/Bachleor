@@ -230,13 +230,25 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   }
 
   const handleTypeChange = (newTypes: string[]) => {
-    if (newTypes.length > 0 && newTypes[0] !== "equation") {
-      // Construct the URL based on the current route
-      const baseUrl = params.subjectId
-        ? `/subjects/${params.subjectId}/exams/${params.examId}/questions/${params.questionId}`
-        : `/my-exams/${params.examId}/questions/${params.questionId}`
+    if (newTypes.length > 0) {
+      // Map the question type to the correct route path
+      const typeToPath: Record<string, string> = {
+        "True/False": "true-false",
+        "Multiple Choice-single": "multiple-choice-single",
+        "Multiple Choice-multi": "multiple-choice-multiple",
+        "Equation": "equation",
+        "Text": "text"
+      }
 
-      router.push(`${baseUrl}/${newTypes[0]}`)
+      const path = typeToPath[newTypes[0]]
+      if (path && path !== "equation") {
+        // Construct the URL based on the current route
+        const baseUrl = params.subjectId
+          ? `/subjects/${params.subjectId}/exams/${params.examId}/questions/${params.questionId}`
+          : `/my-exams/${params.examId}/questions/${params.questionId}`
+
+        router.push(`${baseUrl}/${path}`)
+      }
     }
     setType(newTypes)
     setIsTypeDialogOpen(false)
