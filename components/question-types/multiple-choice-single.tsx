@@ -290,11 +290,13 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   const handleFileUploaded = (url: string, fileName: string, fileType: string) => {
     const newAttachment: Attachment = {
       type: fileType.startsWith('image/') ? 'image' :
-        fileType.startsWith('video/') ? 'video' : 'file',
+        fileType.startsWith('video/') ? 'video' :
+          'file',
       url,
       name: fileName
     }
-    setAttachments(prev => [...prev, newAttachment])
+    console.log('Adding new attachment:', newAttachment); // For debugging
+    setAttachments(prev => [...prev, newAttachment]);
   }
 
   const handleRemoveAttachment = async (index: number) => {
@@ -441,13 +443,28 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               {attachments.map((attachment, index) => (
                 <div key={index} className="border rounded p-2 relative">
                   {attachment.type === 'image' && (
-                    <img src={attachment.url} alt={attachment.name} className="w-full" />
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name}
+                      className="w-full h-auto object-contain"
+                      onError={(e) => console.error('Image load error:', e)}
+                    />
                   )}
                   {attachment.type === 'video' && (
-                    <video src={attachment.url} controls className="w-full" />
+                    <video
+                      src={attachment.url}
+                      controls
+                      className="w-full"
+                      onError={(e) => console.error('Video load error:', e)}
+                    />
                   )}
                   {attachment.type === 'file' && (
-                    <a href={attachment.url} download={attachment.name} className="text-blue-500 hover:underline">
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
                       {attachment.name}
                     </a>
                   )}
