@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Menu, Bot, Tag, Check, Trash2 } from "lucide-react"
+import { Menu, Bot, Tag, Check, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -11,6 +11,7 @@ import { TagDialog } from "../tag-dialog"
 import { supabase } from "@/lib/supabaseClient"
 import { useParams } from "next/navigation"
 import { toast } from 'sonner'
+import { FileUploadHandler } from "../file-upload-handler"
 
 interface Option {
   id: string
@@ -128,7 +129,8 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
           question: questionContent,
           type: "Multiple Choice-single",
           options: optionsJson,
-          correct_answer: correctAnswerJson
+          correct_answer: correctAnswerJson,
+          attachments: attachments
         })
         .eq("id", questionId)
 
@@ -262,7 +264,12 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   }
 
   const handleFileUpload = (type: 'image' | 'video' | 'file') => {
-    console.log('File upload not implemented:', type)
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = type === 'image' ? 'image/*' :
+        type === 'video' ? 'video/*' :
+          '*/*'
+      fileInputRef.current.click()
+    }
   }
 
   const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,6 +286,43 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
       setAttachments([...attachments, newAttachment])
     }
   }
+
+  const handleFileUploaded = (url: string, fileName: string, fileType: string) => {
+    const newAttachment: Attachment = {
+      type: fileType.startsWith('image/') ? 'image' :
+        fileType.startsWith('video/') ? 'video' : 'file',
+      url,
+      name: fileName
+    }
+    setAttachments(prev => [...prev, newAttachment])
+  }
+
+  const handleRemoveAttachment = async (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  useEffect(() => {
+    const fetchAttachments = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("attachments")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching attachments:", error)
+        return
+      }
+
+      if (data?.attachments) {
+        setAttachments(data.attachments)
+      }
+    }
+
+    fetchAttachments()
+  }, [questionId])
 
   return (
     <div className="bg-gray-50">
@@ -389,11 +433,38 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               Add option
             </Button>
           </div>
+
+          {/* Update the attachments section */}
+          {attachments.length > 0 && (
+            <div className="w-64 space-y-4">
+              <h2 className="font-medium">Attachments</h2>
+              {attachments.map((attachment, index) => (
+                <div key={index} className="border rounded p-2 relative">
+                  {attachment.type === 'image' && (
+                    <img src={attachment.url} alt={attachment.name} className="w-full" />
+                  )}
+                  {attachment.type === 'video' && (
+                    <video src={attachment.url} controls className="w-full" />
+                  )}
+                  {attachment.type === 'file' && (
+                    <a href={attachment.url} download={attachment.name} className="text-blue-500 hover:underline">
+                      {attachment.name}
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex justify-end">
           <Button onClick={handleSave}>Save</Button>
-
         </div>
       </div>
       <QuestionTypeDialog

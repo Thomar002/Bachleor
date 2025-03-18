@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Check, Trash2, Menu, Bot, Tag } from "lucide-react"
+import { Check, Trash2, Menu, Bot, Tag, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabaseClient"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
+import { FileUploadHandler } from "../file-upload-handler"
 
 interface Option {
   id: string
@@ -53,16 +54,11 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
     if (!questionId) return
 
     try {
-      // Finn alle korrekte svar (options som har isCorrect = true)
       const correctOptions = options.filter(opt => opt.isCorrect)
-
-      // Konverter options til format for options-kolonnen (uten isCorrect flag)
       const optionsJson = options.map(opt => ({
         id: opt.id,
         text: opt.text
       }))
-
-      // Lag correct_answer format (array med alle korrekte svar)
       const correctAnswerJson = correctOptions.map(opt => ({
         id: opt.id,
         answer: opt.text
@@ -75,12 +71,12 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
           question: questionContent,
           type: "Multiple Choice-multi",
           options: optionsJson,
-          correct_answer: correctAnswerJson
+          correct_answer: correctAnswerJson,
+          attachments: attachments
         })
         .eq("id", questionId)
 
       if (error) throw error
-
       toast.success("Question saved successfully")
     } catch (error) {
       console.error("Error saving question:", error)
@@ -285,6 +281,43 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
     }
   }, []); // Kjører bare én gang ved innlasting
 
+  const handleFileUploaded = (url: string, fileName: string, fileType: string) => {
+    const newAttachment: Attachment = {
+      type: fileType.startsWith('image/') ? 'image' :
+        fileType.startsWith('video/') ? 'video' : 'file',
+      url,
+      name: fileName
+    }
+    setAttachments(prev => [...prev, newAttachment])
+  }
+
+  const handleRemoveAttachment = async (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  useEffect(() => {
+    const fetchAttachments = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("attachments")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching attachments:", error)
+        return
+      }
+
+      if (data?.attachments) {
+        setAttachments(data.attachments)
+      }
+    }
+
+    fetchAttachments()
+  }, [questionId])
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
@@ -390,13 +423,22 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
             <Button variant="outline" onClick={addOption} className="mt-4">
               Add option
             </Button>
+
+            <div className="mt-4">
+              <FileUploadHandler
+                type="image"
+                onFileUploaded={handleFileUploaded}
+              >
+                <Button variant="outline">Upload File</Button>
+              </FileUploadHandler>
+            </div>
           </div>
 
           {attachments.length > 0 && (
             <div className="w-64 space-y-4">
               <h2 className="font-medium">Attachments</h2>
               {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2">
+                <div key={index} className="border rounded p-2 relative">
                   {attachment.type === 'image' && (
                     <img src={attachment.url} alt={attachment.name} className="w-full" />
                   )}
@@ -408,6 +450,12 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
                       {attachment.name}
                     </a>
                   )}
+                  <button
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               ))}
             </div>
