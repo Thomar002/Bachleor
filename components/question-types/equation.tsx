@@ -22,9 +22,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface Props {
-  questionName: string
-  initialTags?: string[]
-  onTagsChange?: (tags: string[]) => void
+  initialTags: string[];
+  onTagsChange?: (tags: string[]) => void;
+  questionName: string;
 }
 
 interface Attachment {
@@ -33,7 +33,7 @@ interface Attachment {
   name: string;
 }
 
-export function Equation({ questionName, initialTags = [], onTagsChange }: Props) {
+export function Equation({ initialTags, onTagsChange, questionName }: Props) {
   const router = useRouter()
   const params = useParams()
   const questionId = params.questionId as string

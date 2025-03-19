@@ -11,18 +11,43 @@ import { useEffect, useState } from "react"
 export default function QuestionTypePage({ params }: { params: { type: string, questionId: string } }) {
   const [question, setQuestion] = useState<any>(null)
 
-  useEffect(() => {
-    const fetchQuestion = async () => {
-      const { data } = await supabase
+  const fetchQuestion = async () => {
+    try {
+      const { data, error } = await supabase
         .from("Questions")
         .select("*")
         .eq("id", params.questionId)
         .single()
 
+      if (error) throw error
       setQuestion(data)
+    } catch (error) {
+      console.error("Error fetching question:", error)
     }
+  }
 
+  useEffect(() => {
     fetchQuestion()
+
+    const channel = supabase
+      .channel('question_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'Questions',
+          filter: `id=eq.${params.questionId}`
+        },
+        () => {
+          fetchQuestion()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [params.questionId])
 
   const components = {
@@ -43,7 +68,6 @@ export default function QuestionTypePage({ params }: { params: { type: string, q
     return <div>Loading...</div>
   }
 
-  // Parse tags if they're stored as a string
   const parsedTags = question.tags
     ? (Array.isArray(question.tags)
       ? question.tags
@@ -56,10 +80,16 @@ export default function QuestionTypePage({ params }: { params: { type: string, q
     questionName={question.name}
     initialTags={parsedTags}
     onTagsChange={async (newTags) => {
-      await supabase
+      const { error } = await supabase
         .from("Questions")
         .update({ tags: newTags })
         .eq("id", params.questionId)
+
+      if (error) {
+        console.error("Error updating tags:", error)
+      } else {
+        fetchQuestion() // Refresh the question data after updating tags
+      }
     }}
   />
 }
