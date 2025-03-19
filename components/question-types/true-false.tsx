@@ -325,12 +325,13 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
       </div>
 
       <div className="container mx-auto p-6" style={{ maxWidth: '1400px' }}>
-        <div className="flex gap-8">
+        <div className={`flex ${attachments.length === 0 ? 'justify-center' : 'justify-start gap-8'}`}>
           <div className="w-[550px]">
+            <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
               ref={editorRef}
               contentEditable
-              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               onInput={handleEditorChange}
               dangerouslySetInnerHTML={{ __html: questionContent }}
             />
@@ -372,7 +373,6 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
             </div>
           </div>
 
-          {/* Attachments section */}
           {attachments.length > 0 && (
             <div className="w-[550px] space-y-4 sticky top-4">
               <h2 className="font-medium">Attachments</h2>

@@ -314,7 +314,7 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
       </div>
 
       <div className="container mx-auto p-6" style={{ maxWidth: '1400px' }}>
-        <div className="flex gap-8">
+        <div className={`flex ${attachments.length === 0 ? 'justify-center' : 'justify-start gap-8'}`}>
           <div className="w-[550px]">
             <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
@@ -357,7 +357,6 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
             </div>
           </div>
 
-          {/* Attachments section */}
           {attachments.length > 0 && (
             <div className="w-[550px] space-y-4 sticky top-4">
               <h2 className="font-medium">Attachments</h2>

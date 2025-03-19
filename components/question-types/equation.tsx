@@ -422,13 +422,13 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
       </div>
 
       <div className="container mx-auto p-6" style={{ maxWidth: '1400px' }}>
-        <div className="flex gap-8">
+        <div className={`flex ${attachments.length === 0 ? 'justify-center' : 'justify-start gap-8'}`}>
           <div className="w-[550px]">
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Equation
+                    Question
                   </label>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -461,7 +461,7 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
                 <Input
                   value={equation}
                   onChange={(e) => setEquation(e.target.value)}
-                  placeholder="Enter equation..."
+                  placeholder="Enter question..."
                 />
               </div>
 
@@ -515,7 +515,6 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
             </div>
           </div>
 
-          {/* Attachments section */}
           {attachments.length > 0 && (
             <div className="w-[550px] space-y-4 sticky top-4">
               <h2 className="font-medium">Attachments</h2>
