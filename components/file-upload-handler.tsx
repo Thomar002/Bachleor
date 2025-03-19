@@ -19,6 +19,12 @@ export const FileUploadHandler = ({ onFileUploaded, type, children }: FileUpload
     const file = event.target.files?.[0]
     if (!file) return
 
+    // Validate file type
+    if (type === 'file' && !file.type.includes('pdf')) {
+      toast.error('Only PDF files are allowed')
+      return
+    }
+
     try {
       const fileExt = file.name.split('.').pop()
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
@@ -49,7 +55,11 @@ export const FileUploadHandler = ({ onFileUploaded, type, children }: FileUpload
         type="file"
         ref={fileInputRef}
         className="hidden"
-        accept={type === 'image' ? 'image/*' : type === 'video' ? 'video/*' : '*/*'}
+        accept={
+          type === 'image' ? 'image/*' :
+            type === 'video' ? 'video/*' :
+              '.pdf'
+        }
         onChange={handleFileSelected}
       />
     </div>

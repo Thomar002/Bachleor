@@ -449,7 +449,6 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
                       src={attachment.url}
                       alt={attachment.name}
                       className="w-full h-auto object-contain"
-                      onError={(e) => console.error('Image load error:', e)}
                     />
                   )}
                   {attachment.type === 'video' && (
@@ -457,18 +456,26 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
                       src={attachment.url}
                       controls
                       className="w-full"
-                      onError={(e) => console.error('Video load error:', e)}
                     />
                   )}
                   {attachment.type === 'file' && (
-                    <a
-                      href={attachment.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {attachment.name}
-                    </a>
+                    <div className="flex flex-col gap-2">
+                      <object
+                        data={attachment.url}
+                        type="application/pdf"
+                        className="w-full h-[200px]"
+                      >
+                        <p>Unable to display PDF. <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Download instead</a></p>
+                      </object>
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline text-sm"
+                      >
+                        {attachment.name}
+                      </a>
+                    </div>
                   )}
                   <button
                     onClick={() => handleRemoveAttachment(index)}
