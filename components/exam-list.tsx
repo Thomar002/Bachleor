@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { CreateExamOverlay } from "./create-exam-overlay"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RenameDialog } from "./rename-dialog"
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -32,6 +33,8 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const router = useRouter()
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([])
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
+  const [examToRename, setExamToRename] = useState<Exam | null>(null)
 
   useEffect(() => {
     fetchExams()
@@ -201,6 +204,21 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
     }
   }
 
+  const handleRename = async (newName: string) => {
+    if (!examToRename) return
+
+    const { error } = await supabase
+      .from("Exams")
+      .update({ name: newName })
+      .eq("id", examToRename.id)
+
+    if (error) {
+      console.error("Error renaming exam:", error)
+    } else {
+      fetchExams()
+    }
+  }
+
   return (
     <main className="flex-1 p-8">
       <div className="max-w-6xl mx-auto">
@@ -290,8 +308,18 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleCopy(exam)}>Copy</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setExamToRename(exam)
+                            setIsRenameDialogOpen(true)
+                          }}
+                        >
+                          Rename
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleExport(exam.id)}>Export</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(exam.id)} className="text-red-600">Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(exam.id)} className="text-red-600">
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -307,6 +335,12 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
           onClose={() => setIsCreateOverlayOpen(false)}
           onCreateExam={handleCreateExam}
           subjectId={subjectId}
+        />
+        <RenameDialog
+          open={isRenameDialogOpen}
+          onOpenChange={setIsRenameDialogOpen}
+          currentName={examToRename?.name || ""}
+          onRename={handleRename}
         />
       </div>
     </main>

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { CreateQuestionOverlay } from "./create-question-overlay"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RenameDialog } from "./rename-dialog"
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -40,6 +41,8 @@ export default function QuestionList() {
   const [selectedQuestions, setSelectedQuestions] = useState<number[]>([])
   const router = useRouter()
   const [exams, setExams] = useState<{ id: number; name: string }[]>([])
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
+  const [questionToRename, setQuestionToRename] = useState<Question | null>(null)
 
   useEffect(() => {
     fetchQuestions()
@@ -240,6 +243,21 @@ export default function QuestionList() {
     linkElement.setAttribute('href', dataUri)
     linkElement.setAttribute('download', exportFileDefaultName)
     linkElement.click()
+  }
+
+  const handleRename = async (newName: string) => {
+    if (!questionToRename) return
+
+    const { error } = await supabase
+      .from("Questions")
+      .update({ name: newName })
+      .eq("id", questionToRename.id)
+
+    if (error) {
+      console.error("Error renaming question:", error)
+    } else {
+      fetchQuestions()
+    }
   }
 
   const filteredQuestions = questions
@@ -457,8 +475,18 @@ export default function QuestionList() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleCopy(question)}>Copy</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setQuestionToRename(question)
+                          setIsRenameDialogOpen(true)
+                        }}
+                      >
+                        Rename
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleExport(question)}>Export</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDeleteQuestion(question.id)} className="text-red-600">Delete</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteQuestion(question.id)} className="text-red-600">
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -472,6 +500,12 @@ export default function QuestionList() {
         isOpen={isCreateOverlayOpen}
         onClose={() => setIsCreateOverlayOpen(false)}
         onCreateQuestion={handleCreateQuestion}
+      />
+      <RenameDialog
+        open={isRenameDialogOpen}
+        onOpenChange={setIsRenameDialogOpen}
+        currentName={questionToRename?.name || ""}
+        onRename={handleRename}
       />
     </div>
   )

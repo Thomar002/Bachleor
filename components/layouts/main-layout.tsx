@@ -21,7 +21,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   const navigationItems = [
-    { href: ROUTES.profile, label: "Profile", icon: User },
     { href: ROUTES.home, label: "Front Page", icon: Home },
     { href: ROUTES.questions, label: "My Questions", icon: HelpCircle },
     { href: ROUTES.exams, label: "My Exams", icon: BookOpen },
@@ -41,7 +40,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           </div>
 
           {/* Main Navigation */}
-          <nav className="space-y-2">
+          <nav className="space-y-4"> {/* Changed from space-y-2 to space-y-4 */}
             {navigationItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
@@ -62,14 +61,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
               )
             })}
           </nav>
-
-          {/* Context-specific navigation can be added here */}
-          {pathname.includes('/subjects/') && (
-            <nav className="mt-8 pt-8 border-t border-[#3B5280] space-y-2">
-              <h3 className="px-4 text-sm font-semibold text-white/60 mb-2">Subject Actions</h3>
-              {/* Subject specific actions */}
-            </nav>
-          )}
         </aside>
       )}
 

@@ -12,6 +12,7 @@ import Link from "next/link"
 import { CreateQuestionOverlay } from "./create-question-overlay"
 import { useParams } from "next/navigation"
 import { Checkbox } from "@/components/ui/checkbox"
+import { RenameDialog } from "./rename-dialog"
 
 type SortField = 'created_at'
 type SortOrder = 'asc' | 'desc'
@@ -35,6 +36,8 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const [sortField, setSortField] = useState<SortField>('created_at')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [selectedQuestions, setSelectedQuestions] = useState<number[]>([])
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
+  const [questionToRename, setQuestionToRename] = useState<Question | null>(null)
 
   // Legg til en funksjon for å bygge riktig URL
   const getQuestionUrl = (questionId: number) => {
@@ -234,6 +237,21 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
     linkElement.click()
   }
 
+  const handleRename = async (newName: string) => {
+    if (!questionToRename) return
+
+    const { error } = await supabase
+      .from("Questions")
+      .update({ name: newName })
+      .eq("id", questionToRename.id)
+
+    if (error) {
+      console.error("Error renaming question:", error)
+    } else {
+      fetchQuestions()
+    }
+  }
+
   return (
     <>
       <main className="flex-1 p-8">
@@ -361,8 +379,18 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleCopy(question)}>Copy</DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setQuestionToRename(question)
+                              setIsRenameDialogOpen(true)
+                            }}
+                          >
+                            Rename
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleExport(question)}>Export</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(question.id)} className="text-red-600">Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(question.id)} className="text-red-600">
+                            Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -378,6 +406,12 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
         isOpen={isCreateOverlayOpen}
         onClose={() => setIsCreateOverlayOpen(false)}
         onCreateQuestion={handleCreateQuestion}
+      />
+      <RenameDialog
+        open={isRenameDialogOpen}
+        onOpenChange={setIsRenameDialogOpen}
+        currentName={questionToRename?.name || ""}
+        onRename={handleRename}
       />
     </>
   )
