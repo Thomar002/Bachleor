@@ -1,8 +1,9 @@
 import QuestionDashboard from "@/components/question-dashboard"
 import { supabase } from "@/lib/supabaseClient"
-import MainLayout from "@/components/layouts/main-layout"
+import { unstable_noStore as noStore } from 'next/cache'
 
 export default async function ExamPage({ params }: { params: { subjectId: string; examId: string } }) {
+  noStore() // Add this line to prevent caching
   const { data: exam } = await supabase.from("Exams").select("*").eq("id", params.examId).single()
 
   if (!exam) {

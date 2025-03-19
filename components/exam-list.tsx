@@ -215,7 +215,8 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
     if (error) {
       console.error("Error renaming exam:", error)
     } else {
-      fetchExams()
+      await fetchExams() // Add await here
+      router.refresh() // Add this line to force a refresh
     }
   }
 
