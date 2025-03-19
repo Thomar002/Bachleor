@@ -535,14 +535,23 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
                     />
                   )}
                   {attachment.type === 'file' && (
-                    <a
-                      href={attachment.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {attachment.name}
-                    </a>
+                    <div className="flex flex-col gap-2">
+                      <object
+                        data={attachment.url}
+                        type="application/pdf"
+                        className="w-full h-[600px]"
+                      >
+                        <p>Unable to display PDF. <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Download instead</a></p>
+                      </object>
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline text-sm"
+                      >
+                        {attachment.name}
+                      </a>
+                    </div>
                   )}
                   <button
                     onClick={() => handleRemoveAttachment(index)}
