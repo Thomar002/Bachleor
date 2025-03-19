@@ -270,9 +270,9 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
         />
       </div>
 
-      <div className="container mx-auto p-6 max-w-3xl">
-        <div className="flex gap-6">
-          <div className="flex-1">
+      <div className="container mx-auto p-6" style={{ maxWidth: '1400px' }}>
+        <div className="flex gap-8">
+          <div className="w-[550px]">
             <div
               ref={editorRef}
               contentEditable
@@ -286,8 +286,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                 <div className="flex items-center gap-4">
                   <div className="flex-1 flex items-center gap-4">
                     <div
-                      className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === true ? "border-green-500 bg-green-500" : "border-gray-300"
-                        }`}
+                      className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === true ? "border-green-500 bg-green-500" : "border-gray-300"}`}
                       onClick={() => setCorrectAnswer(true)}
                     >
                       {correctAnswer === true && <Check className="h-4 w-4 text-white" />}
@@ -299,8 +298,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                 <div className="flex items-center gap-4">
                   <div className="flex-1 flex items-center gap-4">
                     <div
-                      className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === false ? "border-green-500 bg-green-500" : "border-gray-300"
-                        }`}
+                      className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === false ? "border-green-500 bg-green-500" : "border-gray-300"}`}
                       onClick={() => setCorrectAnswer(false)}
                     >
                       {correctAnswer === false && <Check className="h-4 w-4 text-white" />}
@@ -322,22 +320,22 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
 
           {/* Attachments section */}
           {attachments.length > 0 && (
-            <div className="w-64 space-y-4">
+            <div className="w-[550px] space-y-4 sticky top-4">
               <h2 className="font-medium">Attachments</h2>
               {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2 relative">
+                <div key={index} className="border rounded p-4 relative">
                   {attachment.type === 'image' && (
                     <img
                       src={attachment.url}
                       alt={attachment.name}
-                      className="w-full h-auto object-contain"
+                      className="w-full h-auto object-contain max-h-[600px]"
                     />
                   )}
                   {attachment.type === 'video' && (
                     <video
                       src={attachment.url}
                       controls
-                      className="w-full"
+                      className="w-full max-h-[600px]"
                     />
                   )}
                   {attachment.type === 'file' && (
@@ -361,14 +359,6 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
             </div>
           )}
         </div>
-
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileSelected}
-        />
-
       </div>
 
       <QuestionTypeDialog

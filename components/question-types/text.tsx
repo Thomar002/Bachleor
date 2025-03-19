@@ -313,15 +313,15 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
         />
       </div>
 
-      <div className="container mx-auto p-6 max-w-3xl">
-        <div className="flex gap-6">
-          <div className="flex-1">
+      <div className="container mx-auto p-6" style={{ maxWidth: '1400px' }}>
+        <div className="flex gap-8">
+          <div className="w-[550px]">
             <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
               ref={answerEditorRef}
               contentEditable
               data-placeholder="Enter your question here..."
-              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
+              className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
             />
@@ -359,22 +359,22 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
 
           {/* Attachments section */}
           {attachments.length > 0 && (
-            <div className="w-64 space-y-4">
+            <div className="w-[550px] space-y-4 sticky top-4">
               <h2 className="font-medium">Attachments</h2>
               {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2 relative">
+                <div key={index} className="border rounded p-4 relative">
                   {attachment.type === 'image' && (
                     <img
                       src={attachment.url}
                       alt={attachment.name}
-                      className="w-full h-auto object-contain"
+                      className="w-full h-auto object-contain max-h-[600px]"
                     />
                   )}
                   {attachment.type === 'video' && (
                     <video
                       src={attachment.url}
                       controls
-                      className="w-full"
+                      className="w-full max-h-[600px]"
                     />
                   )}
                   {attachment.type === 'file' && (

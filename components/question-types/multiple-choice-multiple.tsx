@@ -383,9 +383,9 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
         />
       </div>
 
-      <div className="container mx-auto p-6 max-w-3xl">
-        <div className="flex gap-6">
-          <div className="flex-1">
+      <div className="container mx-auto p-6" style={{ maxWidth: '1400px' }}>
+        <div className="flex gap-8">
+          <div className="w-[550px]">
             <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
               ref={editorRef}
@@ -427,32 +427,45 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
             <div className="mt-4 flex justify-end">
               <Button onClick={handleSave}>Save</Button>
             </div>
-
-            <div className="mt-4">
-              <FileUploadHandler
-                type="image"
-                onFileUploaded={handleFileUploaded}
-              >
-                <Button variant="outline">Upload File</Button>
-              </FileUploadHandler>
-            </div>
           </div>
 
           {attachments.length > 0 && (
-            <div className="w-64 space-y-4">
+            <div className="w-[550px] space-y-4 sticky top-4">
               <h2 className="font-medium">Attachments</h2>
               {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2 relative">
+                <div key={index} className="border rounded p-4 relative">
                   {attachment.type === 'image' && (
-                    <img src={attachment.url} alt={attachment.name} className="w-full" />
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name}
+                      className="w-full h-auto object-contain max-h-[600px]"
+                    />
                   )}
                   {attachment.type === 'video' && (
-                    <video src={attachment.url} controls className="w-full" />
+                    <video
+                      src={attachment.url}
+                      controls
+                      className="w-full max-h-[600px]"
+                    />
                   )}
                   {attachment.type === 'file' && (
-                    <a href={attachment.url} download={attachment.name} className="text-blue-500 hover:underline">
-                      {attachment.name}
-                    </a>
+                    <div className="flex flex-col gap-2">
+                      <object
+                        data={attachment.url}
+                        type="application/pdf"
+                        className="w-full h-[600px]"
+                      >
+                        <p>Unable to display PDF. <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Download instead</a></p>
+                      </object>
+                      <a
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline text-sm"
+                      >
+                        {attachment.name}
+                      </a>
+                    </div>
                   )}
                   <button
                     onClick={() => handleRemoveAttachment(index)}
@@ -465,8 +478,6 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
             </div>
           )}
         </div>
-
-
       </div>
       <QuestionTypeDialog
         open={isTypeDialogOpen}

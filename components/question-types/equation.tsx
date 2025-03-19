@@ -421,108 +421,118 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
         />
       </div>
 
-      <div className="container mx-auto p-6 max-w-3xl">
-        <div className="flex gap-6">
-          <div className="flex-1">
-            <div className="space-y-8"> {/* Changed from space-y-4 to space-y-8 */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-medium text-gray-700">Question</h2>
+      <div className="container mx-auto p-6" style={{ maxWidth: '1400px' }}>
+        <div className="flex gap-8">
+          <div className="w-[550px]">
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Equation
+                  </label>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Insert Symbol
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-1"
+                      >
+                        <span className="text-lg">Ω</span>
+                        <span className="text-sm">Symbol</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                      <ScrollArea className="h-[300px]">
-                        <DropdownMenuGroup>
-                          {equationSymbols.map((item) => (
-                            <DropdownMenuItem
-                              key={item.symbol}
-                              onClick={() => setEquation(prev => prev + item.symbol)}
-                            >
-                              <span className="flex items-center">
-                                {item.icon && <span className="mr-2">{item.icon}</span>}
-                                {item.label} ({item.symbol})
-                              </span>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuGroup>
-                      </ScrollArea>
+                    <DropdownMenuContent>
+                      <DropdownMenuGroup>
+                        {equationSymbols.map((symbol) => (
+                          <DropdownMenuItem
+                            key={symbol.symbol}
+                            onClick={() => insertSymbol(symbol.symbol)}
+                          >
+                            <div className="flex items-center">
+                              {symbol.icon}
+                              <span className="ml-2">{symbol.label}</span>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
                 <Input
                   value={equation}
                   onChange={(e) => setEquation(e.target.value)}
-                  placeholder="Enter your question here..."
-                  className="font-mono"
+                  placeholder="Enter equation..."
                 />
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-medium text-gray-700">Correct Answer</h2>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Answer
+                  </label>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Insert Symbol
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-1"
+                      >
+                        <span className="text-lg">Ω</span>
+                        <span className="text-sm">Symbol</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
-                      <ScrollArea className="h-[300px]">
-                        <DropdownMenuGroup>
-                          {equationSymbols.map((item) => (
-                            <DropdownMenuItem
-                              key={item.symbol}
-                              onClick={() => setAnswer(prev => prev + item.symbol)}
-                            >
-                              <span className="flex items-center">
-                                {item.icon && <span className="mr-2">{item.icon}</span>}
-                                {item.label} ({item.symbol})
-                              </span>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuGroup>
-                      </ScrollArea>
+                    <DropdownMenuContent>
+                      <DropdownMenuGroup>
+                        {equationSymbols.map((symbol) => (
+                          <DropdownMenuItem
+                            key={symbol.symbol}
+                            onClick={() => setAnswer(answer + symbol.symbol)}
+                          >
+                            <div className="flex items-center">
+                              {symbol.icon}
+                              <span className="ml-2">{symbol.label}</span>
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
                 <Input
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Enter the correct answer"
-                  className="font-mono"
+                  placeholder="Enter answer..."
                 />
               </div>
             </div>
             <div className="mt-4 flex justify-end">
-              <Button onClick={handleSave}>Save</Button>
+              <SaveQuestionButton
+                displayName={displayName}
+                question={equation}
+                type="Equation"
+                onSave={handleSave}
+              />
             </div>
           </div>
 
+          {/* Attachments section */}
           {attachments.length > 0 && (
-            <div className="w-64 space-y-4">
+            <div className="w-[550px] space-y-4 sticky top-4">
               <h2 className="font-medium">Attachments</h2>
               {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2 relative">
+                <div key={index} className="border rounded p-4 relative">
                   {attachment.type === 'image' && (
                     <img
                       src={attachment.url}
                       alt={attachment.name}
-                      className="w-full h-auto object-contain"
-                      onError={(e) => console.error('Image load error:', e)}
+                      className="w-full h-auto object-contain max-h-[600px]"
                     />
                   )}
                   {attachment.type === 'video' && (
                     <video
                       src={attachment.url}
                       controls
-                      className="w-full"
-                      onError={(e) => console.error('Video load error:', e)}
+                      className="w-full max-h-[600px]"
                     />
                   )}
                   {attachment.type === 'file' && (
