@@ -424,6 +424,10 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
               Add option
             </Button>
 
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleSave}>Save</Button>
+            </div>
+
             <div className="mt-4">
               <FileUploadHandler
                 type="image"
@@ -462,9 +466,7 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
           )}
         </div>
 
-        <div className="mt-4 flex justify-end">
-          <Button onClick={handleSave}>Save</Button>
-        </div>
+
       </div>
       <QuestionTypeDialog
         open={isTypeDialogOpen}

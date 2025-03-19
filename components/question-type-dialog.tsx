@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Circle, ThumbsUp, ThumbsDown, Type, FunctionSquare } from "lucide-react"
+import { CheckCircle, Circle, ThumbsUp, ThumbsDown, Type, FunctionSquare, CheckSquare } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
 
@@ -44,7 +44,7 @@ export function QuestionTypeDialog({ open, onOpenChange, onTypeSelect, currentTy
     {
       id: "Multiple Choice-multi",
       name: "Multiple choice (multiple answers)",
-      icon: <Circle className="w-8 h-8" />,
+      icon: <CheckSquare className="w-8 h-8" />,
       path: "multiple-choice-multiple"
     },
     {

@@ -325,6 +325,36 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
             />
+            <div className="mt-4 flex justify-end">
+              <SaveQuestionButton
+                displayName={displayName}
+                question={questionContent}
+                type="text"
+                onSave={async () => {
+                  if (!questionId) return
+
+                  try {
+                    const { error } = await supabase
+                      .from("Questions")
+                      .update({
+                        display_name: displayName,
+                        question: questionContent,
+                        type: "text",
+                        tags: tags,
+                        attachments: attachments
+                      })
+                      .eq("id", questionId)
+
+                    if (error) throw error
+
+                    toast.success("Question saved successfully")
+                  } catch (error) {
+                    console.error("Error saving question:", error)
+                    toast.error("Failed to save question")
+                  }
+                }}
+              />
+            </div>
           </div>
 
           {/* Attachments section */}
@@ -375,37 +405,6 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
           className="hidden"
           onChange={handleFileSelected}
         />
-
-        <div className="mt-4 flex justify-end">
-          <SaveQuestionButton
-            displayName={displayName}
-            question={questionContent}
-            type="text"
-            onSave={async () => {
-              if (!questionId) return
-
-              try {
-                const { error } = await supabase
-                  .from("Questions")
-                  .update({
-                    display_name: displayName,
-                    question: questionContent,
-                    type: "text",
-                    tags: tags,
-                    attachments: attachments
-                  })
-                  .eq("id", questionId)
-
-                if (error) throw error
-
-                toast.success("Question saved successfully")
-              } catch (error) {
-                console.error("Error saving question:", error)
-                toast.error("Failed to save question")
-              }
-            }}
-          />
-        </div>
       </div>
 
       <QuestionTypeDialog

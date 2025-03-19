@@ -499,6 +499,9 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
                 />
               </div>
             </div>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleSave}>Save</Button>
+            </div>
           </div>
 
           {attachments.length > 0 && (
@@ -542,10 +545,6 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
               ))}
             </div>
           )}
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <Button onClick={handleSave}>Save</Button>
         </div>
       </div>
 

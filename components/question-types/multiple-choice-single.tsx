@@ -434,8 +434,10 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
             <Button variant="outline" onClick={addOption} className="mt-4">
               Add option
             </Button>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleSave}>Save</Button>
+            </div>
           </div>
-
           {/* Update the attachments section */}
           {attachments.length > 0 && (
             <div className="w-64 space-y-4">
@@ -478,10 +480,6 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               ))}
             </div>
           )}
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <Button onClick={handleSave}>Save</Button>
         </div>
       </div>
       <QuestionTypeDialog

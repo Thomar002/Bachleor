@@ -310,6 +310,14 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                 </div>
               </div>
             </div>
+            <div className="mt-4 flex justify-end">
+              <SaveQuestionButton
+                displayName={displayName}
+                question={questionContent}
+                type="True/False"
+                onSave={handleSave}
+              />
+            </div>
           </div>
 
           {/* Attachments section */}
@@ -361,14 +369,6 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
           onChange={handleFileSelected}
         />
 
-        <div className="mt-4 flex justify-end">
-          <SaveQuestionButton
-            displayName={displayName}
-            question={questionContent}
-            type="True/False"
-            onSave={handleSave}
-          />
-        </div>
       </div>
 
       <QuestionTypeDialog
