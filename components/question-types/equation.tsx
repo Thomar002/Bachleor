@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Menu, Bot, Plus, Square, Tag, Divide } from "lucide-react"
+import { Menu, Bot, Plus, Square, Tag, Divide, X } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { SaveQuestionButton } from "../save-question-button"
 import { QuestionTypeDialog } from "../question-type-dialog"
@@ -27,6 +27,12 @@ interface Props {
   onTagsChange?: (tags: string[]) => void
 }
 
+interface Attachment {
+  type: 'image' | 'video' | 'file';
+  url: string;
+  name: string;
+}
+
 export function Equation({ questionName, initialTags = [], onTagsChange }: Props) {
   const router = useRouter()
   const params = useParams()
@@ -41,7 +47,8 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const [equation, setEquation] = useState("")
   const [answer, setAnswer] = useState("")
   const editorRef = useRef<HTMLDivElement>(null)
-  const [attachments, setAttachments] = useState<Array<{ type: string; url: string }>>([])
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -94,7 +101,8 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
           display_name: displayName,
           question: equation,
           type: "Equation",
-          correct_answer: [{ answer: answer }]  // Matcher formatet til andre spørsmålstyper
+          correct_answer: [{ answer: answer }],
+          attachments: attachments
         })
         .eq("id", questionId)
 
@@ -225,9 +233,73 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
     setEquation(prev => prev + symbol)
   }
 
-  const handleFileUpload = async (type: 'image' | 'video' | 'file') => {
-    // Implement file upload logic
+  const handleFileUpload = (type: 'image' | 'video' | 'file') => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = type === 'image' ? 'image/*' :
+        type === 'video' ? 'video/*' : '*/*'
+      fileInputRef.current.click()
+    }
   }
+
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `questions/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('questions')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('questions')
+        .getPublicUrl(filePath)
+
+      const newAttachment: Attachment = {
+        type: file.type.startsWith('image/') ? 'image' :
+          file.type.startsWith('video/') ? 'video' : 'file',
+        url: publicUrl,
+        name: file.name
+      }
+      setAttachments(prev => [...prev, newAttachment])
+      toast.success('File uploaded successfully')
+    } catch (error: any) {
+      console.error('Error uploading file:', error)
+      toast.error(error.message || 'Failed to upload file')
+    }
+  }
+
+  const handleRemoveAttachment = async (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  useEffect(() => {
+    const fetchAttachments = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("attachments")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching attachments:", error)
+        return
+      }
+
+      if (data?.attachments) {
+        setAttachments(data.attachments)
+      }
+    }
+
+    fetchAttachments()
+  }, [questionId])
 
   const handleTypeChange = (newTypes: string[]) => {
     if (newTypes.length > 0) {
@@ -433,8 +505,39 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
             <div className="w-64 space-y-4">
               <h2 className="font-medium">Attachments</h2>
               {attachments.map((attachment, index) => (
-                <div key={index} className="border rounded p-2">
-                  {/* Attachment preview logic */}
+                <div key={index} className="border rounded p-2 relative">
+                  {attachment.type === 'image' && (
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name}
+                      className="w-full h-auto object-contain"
+                      onError={(e) => console.error('Image load error:', e)}
+                    />
+                  )}
+                  {attachment.type === 'video' && (
+                    <video
+                      src={attachment.url}
+                      controls
+                      className="w-full"
+                      onError={(e) => console.error('Video load error:', e)}
+                    />
+                  )}
+                  {attachment.type === 'file' && (
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {attachment.name}
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -459,6 +562,12 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
         currentTags={tags}
         availableTags={availableTags}
         onTagsChange={handleTagsChange}
+      />
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        onChange={handleFileSelected}
       />
     </div>
   )

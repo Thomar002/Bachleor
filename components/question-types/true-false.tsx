@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Check, Menu, Bot, Tag } from "lucide-react"
+import { Check, Menu, Bot, Tag, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
@@ -13,6 +13,7 @@ import { useParams, useRouter } from "next/navigation"
 import { SaveQuestionButton } from "../save-question-button"
 import { toast } from "sonner"
 import { QuestionType } from "@/types"
+import { FileUploadHandler } from "../file-upload-handler"
 
 interface Attachment {
   type: 'image' | 'video' | 'file';
@@ -40,6 +41,8 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false)
   const [availableTags, setAvailableTags] = useState<string[]>([])
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -69,8 +72,48 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   }
 
   const handleFileUpload = (type: 'image' | 'video' | 'file') => {
-    // Implementer filopplasting her hvis det trengs
-    console.log('File upload not implemented:', type)
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = type === 'image' ? 'image/*' :
+        type === 'video' ? 'video/*' : '*/*'
+      fileInputRef.current.click()
+    }
+  }
+
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `questions/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('questions')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('questions')
+        .getPublicUrl(filePath)
+
+      const newAttachment: Attachment = {
+        type: file.type.startsWith('image/') ? 'image' :
+          file.type.startsWith('video/') ? 'video' : 'file',
+        url: publicUrl,
+        name: file.name
+      }
+      setAttachments(prev => [...prev, newAttachment])
+      toast.success('File uploaded successfully')
+    } catch (error: any) {
+      console.error('Error uploading file:', error)
+      toast.error(error.message || 'Failed to upload file')
+    }
+  }
+
+  const handleRemoveAttachment = async (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
   useEffect(() => {
@@ -112,11 +155,33 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
     fetchQuestionData()
   }, [questionId])
 
+  useEffect(() => {
+    const fetchAttachments = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("attachments")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching attachments:", error)
+        return
+      }
+
+      if (data?.attachments) {
+        setAttachments(data.attachments)
+      }
+    }
+
+    fetchAttachments()
+  }, [questionId])
+
   const handleSave = async () => {
     if (!questionId) return
 
     try {
-      // Konverterer boolean til et JSON-array format som passer jsonb[]
       const correctAnswerJson = correctAnswer !== null ? [{ answer: correctAnswer }] : []
 
       const { error } = await supabase
@@ -125,12 +190,12 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
           display_name: displayName,
           question: questionContent,
           type: "True/False",
-          correct_answer: correctAnswerJson
+          correct_answer: correctAnswerJson,
+          attachments: attachments
         })
         .eq("id", questionId)
 
       if (error) throw error
-
       toast.success("Question saved successfully")
     } catch (error) {
       console.error("Error saving question:", error)
@@ -208,45 +273,93 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
       <div className="container mx-auto p-6 max-w-3xl">
         <div className="flex gap-6">
           <div className="flex-1">
-            <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
               ref={editorRef}
               contentEditable
-              data-placeholder="Enter your question here..."
-              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400"
-              style={{ lineHeight: '1.5' }}
+              className="min-h-[200px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               onInput={handleEditorChange}
+              dangerouslySetInnerHTML={{ __html: questionContent }}
             />
-
-            <div className="mt-8 space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="flex-1 flex items-center gap-4">
-                  <div
-                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === true ? "border-green-500 bg-green-500" : "border-gray-300"
-                      }`}
-                    onClick={() => setCorrectAnswer(true)}
-                  >
-                    {correctAnswer === true && <Check className="h-4 w-4 text-white" />}
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Select correct answer:</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 flex items-center gap-4">
+                    <div
+                      className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === true ? "border-green-500 bg-green-500" : "border-gray-300"
+                        }`}
+                      onClick={() => setCorrectAnswer(true)}
+                    >
+                      {correctAnswer === true && <Check className="h-4 w-4 text-white" />}
+                    </div>
+                    <span>True</span>
                   </div>
-                  <span>True</span>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex-1 flex items-center gap-4">
-                  <div
-                    className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === false ? "border-green-500 bg-green-500" : "border-gray-300"
-                      }`}
-                    onClick={() => setCorrectAnswer(false)}
-                  >
-                    {correctAnswer === false && <Check className="h-4 w-4 text-white" />}
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 flex items-center gap-4">
+                    <div
+                      className={`h-6 w-6 rounded-full border-2 flex items-center justify-center cursor-pointer ${correctAnswer === false ? "border-green-500 bg-green-500" : "border-gray-300"
+                        }`}
+                      onClick={() => setCorrectAnswer(false)}
+                    >
+                      {correctAnswer === false && <Check className="h-4 w-4 text-white" />}
+                    </div>
+                    <span>False</span>
                   </div>
-                  <span>False</span>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Attachments section */}
+          {attachments.length > 0 && (
+            <div className="w-64 space-y-4">
+              <h2 className="font-medium">Attachments</h2>
+              {attachments.map((attachment, index) => (
+                <div key={index} className="border rounded p-2 relative">
+                  {attachment.type === 'image' && (
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name}
+                      className="w-full h-auto object-contain"
+                    />
+                  )}
+                  {attachment.type === 'video' && (
+                    <video
+                      src={attachment.url}
+                      controls
+                      className="w-full"
+                    />
+                  )}
+                  {attachment.type === 'file' && (
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {attachment.name}
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileSelected}
+        />
 
         <div className="mt-4 flex justify-end">
           <SaveQuestionButton

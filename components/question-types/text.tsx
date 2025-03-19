@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Menu, Bot, Tag } from "lucide-react"
+import { Menu, Bot, Tag, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
@@ -12,11 +12,18 @@ import { TagDialog } from "../tag-dialog"
 import { useParams, useRouter } from "next/navigation"
 import { SaveQuestionButton } from "../save-question-button"
 import { toast } from "sonner"
+import { FileUploadHandler } from "../file-upload-handler"
 
 interface Props {
   questionName: string;
   initialTags?: string[];
   onTagsChange?: (tags: string[]) => void;
+}
+
+interface Attachment {
+  type: 'image' | 'video' | 'file';
+  url: string;
+  name: string;
 }
 
 export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
@@ -30,6 +37,8 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [tags, setTags] = useState<string[]>(initialTags)
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const answerEditorRef = useRef<HTMLDivElement>(null)
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
     const content = e.currentTarget.innerHTML;
@@ -151,6 +160,74 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     document.execCommand('fontSize', false, size);
   }
 
+  const handleFileUpload = (type: 'image' | 'video' | 'file') => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = type === 'image' ? 'image/*' :
+        type === 'video' ? 'video/*' : '*/*'
+      fileInputRef.current.click()
+    }
+  }
+
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `questions/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('questions')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('questions')
+        .getPublicUrl(filePath)
+
+      const newAttachment: Attachment = {
+        type: file.type.startsWith('image/') ? 'image' :
+          file.type.startsWith('video/') ? 'video' : 'file',
+        url: publicUrl,
+        name: file.name
+      }
+      setAttachments(prev => [...prev, newAttachment])
+      toast.success('File uploaded successfully')
+    } catch (error: any) {
+      console.error('Error uploading file:', error)
+      toast.error(error.message || 'Failed to upload file')
+    }
+  }
+
+  const handleRemoveAttachment = async (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  useEffect(() => {
+    const fetchAttachments = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("attachments")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching attachments:", error)
+        return
+      }
+
+      if (data?.attachments) {
+        setAttachments(data.attachments)
+      }
+    }
+
+    fetchAttachments()
+  }, [questionId])
+
   const handleSaveQuestion = async () => {
     if (!questionId) return
 
@@ -230,9 +307,9 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
           onAlign={handleAlign}
           onFontChange={handleFontChange}
           onSizeChange={handleSizeChange}
-          onImageUpload={() => { }}
-          onVideoUpload={() => { }}
-          onFileUpload={() => { }}
+          onImageUpload={() => handleFileUpload('image')}
+          onVideoUpload={() => handleFileUpload('video')}
+          onFileUpload={() => handleFileUpload('file')}
         />
       </div>
 
@@ -249,7 +326,55 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               onInput={handleEditorChange}
             />
           </div>
+
+          {/* Attachments section */}
+          {attachments.length > 0 && (
+            <div className="w-64 space-y-4">
+              <h2 className="font-medium">Attachments</h2>
+              {attachments.map((attachment, index) => (
+                <div key={index} className="border rounded p-2 relative">
+                  {attachment.type === 'image' && (
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name}
+                      className="w-full h-auto object-contain"
+                    />
+                  )}
+                  {attachment.type === 'video' && (
+                    <video
+                      src={attachment.url}
+                      controls
+                      className="w-full"
+                    />
+                  )}
+                  {attachment.type === 'file' && (
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {attachment.name}
+                    </a>
+                  )}
+                  <button
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileSelected}
+        />
 
         <div className="mt-4 flex justify-end">
           <SaveQuestionButton
@@ -265,8 +390,9 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
                   .update({
                     display_name: displayName,
                     question: questionContent,
-                    type: "text",  // Endret fra ["text"] til "text"
-                    tags: tags
+                    type: "text",
+                    tags: tags,
+                    attachments: attachments
                   })
                   .eq("id", questionId)
 
