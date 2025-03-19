@@ -104,7 +104,7 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
             editorRef.current.innerHTML = data.question || ""
           }
 
-          // Parse options og correct_answer fra databasen
+          // Parse options and correct_answer from database
           if (data.options && Array.isArray(data.options)) {
             const correctAnswerIds = data.correct_answer?.map((ans: any) => ans.id) || []
 
@@ -116,6 +116,16 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
 
             setOptions(parsedOptions)
           }
+
+          // Parse and set tags
+          if (data.tags) {
+            const parsedTags = Array.isArray(data.tags)
+              ? data.tags
+              : typeof data.tags === 'string'
+                ? JSON.parse(data.tags)
+                : []
+            setTags(parsedTags)
+          }
         }
       } catch (error) {
         console.error("Error fetching question:", error)
@@ -124,6 +134,7 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
     }
 
     fetchQuestionData()
+    fetchAvailableTags()
   }, [questionId])
 
   const fetchQuestionTags = async () => {

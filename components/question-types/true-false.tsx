@@ -116,6 +116,33 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
     setAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
+  const fetchAvailableTags = async () => {
+    const { data, error } = await supabase
+      .from("Questions")
+      .select("tags")
+
+    if (error) {
+      console.error("Error fetching tags:", error)
+      return
+    }
+
+    const allTags = data
+      .flatMap(q => {
+        if (Array.isArray(q.tags)) return q.tags
+        if (typeof q.tags === 'string') {
+          try {
+            return JSON.parse(q.tags)
+          } catch {
+            return []
+          }
+        }
+        return []
+      })
+      .filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
+
+    setAvailableTags([...new Set(allTags)])
+  }
+
   useEffect(() => {
     const fetchQuestionData = async () => {
       if (!questionId) return
@@ -136,12 +163,22 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
             editorRef.current.innerHTML = data.question || ""
           }
 
-          // Parse correct_answer fra databasen
+          // Parse correct_answer from database
           if (data.correct_answer && data.correct_answer.length > 0) {
             const answer = data.correct_answer[0]?.answer
             setCorrectAnswer(typeof answer === 'boolean' ? answer : null)
           } else {
             setCorrectAnswer(null)
+          }
+
+          // Parse and set tags
+          if (data.tags) {
+            const parsedTags = Array.isArray(data.tags)
+              ? data.tags
+              : typeof data.tags === 'string'
+                ? JSON.parse(data.tags)
+                : []
+            setTags(parsedTags)
           }
         }
       } catch (error) {
@@ -153,6 +190,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
     }
 
     fetchQuestionData()
+    fetchAvailableTags()
   }, [questionId])
 
   useEffect(() => {
@@ -223,6 +261,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
       <div className="border-b bg-white">
         <div className="p-4">
           <h1 className="text-xl font-semibold mb-4">{questionName}</h1>
+          <Separator className="my-4" />
           <div className="flex gap-4">
             <div className="flex flex-col items-center">
               <Button
@@ -241,6 +280,21 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               <Tag className="h-5 w-5" />
               Tags ({tags.length})
             </Button>
+            <div className="flex flex-col items-center">
+              <Button className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                AI creator
+              </Button>
+              <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
+            </div>
+          </div>
+          {/* Display current tags */}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                {tag}
+              </div>
+            ))}
           </div>
         </div>
 

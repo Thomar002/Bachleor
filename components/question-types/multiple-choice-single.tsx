@@ -71,7 +71,7 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
             editorRef.current.innerHTML = data.question || ""
           }
 
-          // Parse options og correct_answer fra databasen
+          // Parse options and correct_answer from database
           if (data.options && Array.isArray(data.options)) {
             const correctAnswerId = data.correct_answer?.[0]?.id
 
@@ -83,6 +83,16 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
 
             setOptions(parsedOptions)
           }
+
+          // Parse and set tags
+          if (data.tags) {
+            const parsedTags = Array.isArray(data.tags)
+              ? data.tags
+              : typeof data.tags === 'string'
+                ? JSON.parse(data.tags)
+                : []
+            setTags(parsedTags)
+          }
         }
       } catch (error) {
         console.error("Error fetching question:", error)
@@ -91,6 +101,7 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
     }
 
     fetchQuestionData()
+    fetchAvailableTags() // Add this to fetch available tags
   }, [questionId])
 
   useEffect(() => {
