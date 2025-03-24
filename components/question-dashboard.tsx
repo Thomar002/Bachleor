@@ -152,10 +152,10 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
     const newQuestion = {
       name,
       tags,
-      exam_id: examId,
+      exam_id: examId, // This now uses the examId prop directly
     }
 
-    const { data, error } = await supabase.from("Questions").insert([newQuestion]).select() // Add .select() to get the created question
+    const { data, error } = await supabase.from("Questions").insert([newQuestion]).select()
 
     if (error) {
       console.error("Error creating question:", error)
@@ -366,7 +366,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                     >
                       {question.name}
                     </Link>
-                    <div>{question.type?.join(", ") || ""}</div>
+                    <div>{Array.isArray(question.type) ? question.type.join(", ") : (question.type || "")}</div>
                     <div>{question.tags.join(", ")}</div>
                     <div>{examName}</div>
                     <div>{new Date(question.created_at).toLocaleDateString("no-NO")}</div>
@@ -406,6 +406,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
         isOpen={isCreateOverlayOpen}
         onClose={() => setIsCreateOverlayOpen(false)}
         onCreateQuestion={handleCreateQuestion}
+        showExamField={false}  // Hide exam field in exam dashboard
       />
       <RenameDialog
         open={isRenameDialogOpen}

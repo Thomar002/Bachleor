@@ -276,7 +276,7 @@ export default function QuestionList() {
       const newQuestion = {
         name,
         tags,
-        exam_id: examId,
+        exam_id: examId ? parseInt(examId) : null,
       }
 
       const { data, error } = await supabase
@@ -500,6 +500,7 @@ export default function QuestionList() {
         isOpen={isCreateOverlayOpen}
         onClose={() => setIsCreateOverlayOpen(false)}
         onCreateQuestion={handleCreateQuestion}
+        showExamField={true}  // Show exam field in question list
       />
       <RenameDialog
         open={isRenameDialogOpen}

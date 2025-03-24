@@ -13,42 +13,38 @@ interface CreateQuestionOverlayProps {
   isOpen: boolean
   onClose: () => void
   onCreateQuestion: (name: string, tags: string[], examId: string | null) => void
+  showExamField?: boolean
 }
 
-export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion }: CreateQuestionOverlayProps) {
+export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion, showExamField = false }: CreateQuestionOverlayProps) {
   const [name, setName] = useState("")
   const [tags, setTags] = useState("")
-  const [selectedExam, setSelectedExam] = useState<string>("")
-  const [exams, setExams] = useState<{ id: string; name: string }[]>([])
-  const [loading, setLoading] = useState(true)
+  const [selectedExam, setSelectedExam] = useState<string | null>(null)
+  const [exams, setExams] = useState<{ id: number; name: string }[]>([])
+
+  useEffect(() => {
+    if (isOpen && showExamField) {
+      fetchExams()
+    }
+  }, [isOpen, showExamField])
 
   useEffect(() => {
     if (isOpen) {
-      fetchExams()
-      // Reset form when opening
       setName("")
       setTags("")
-      setSelectedExam("")
+      setSelectedExam(null)
     }
   }, [isOpen])
 
-  async function fetchExams() {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from("Exams")
-        .select("id, name")
-        .order('name', { ascending: true })
+  const fetchExams = async () => {
+    const { data, error } = await supabase
+      .from("Exams")
+      .select("id, name")
 
-      if (error) throw error
-
-      if (data) {
-        setExams(data)
-      }
-    } catch (error) {
+    if (error) {
       console.error("Error fetching exams:", error)
-    } finally {
-      setLoading(false)
+    } else {
+      setExams(data || [])
     }
   }
 
@@ -60,11 +56,11 @@ export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion }: Cre
         .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag),
-      selectedExam || null
+      showExamField ? selectedExam : null  // Always pass a value, null if no exam selected
     )
     setName("")
     setTags("")
-    setSelectedExam("")
+    setSelectedExam(null)
     onClose()
   }
 
@@ -83,29 +79,25 @@ export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion }: Cre
             <Label htmlFor="tags">Tags (comma-separated)</Label>
             <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="tag1, tag2, tag3" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="exam">Exam (Optional)</Label>
-            <Select value={selectedExam} onValueChange={setSelectedExam}>
-              <SelectTrigger id="exam">
-                <SelectValue placeholder="Select an exam">
-                  {selectedExam ? exams.find(e => e.id.toString() === selectedExam)?.name : "Select an exam"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {loading ? (
-                  <SelectItem value="loading" disabled>Loading exams...</SelectItem>
-                ) : exams.length > 0 ? (
-                  exams.map((exam) => (
+          {showExamField && (
+            <div className="space-y-2">
+              <Label htmlFor="exam">Exam</Label>
+              <Select value={selectedExam || ""} onValueChange={setSelectedExam}>
+                <SelectTrigger id="exam">
+                  <SelectValue placeholder="Select an exam">
+                    {selectedExam ? exams.find(e => e.id.toString() === selectedExam)?.name : "Select an exam"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {exams.map((exam) => (
                     <SelectItem key={exam.id} value={exam.id.toString()}>
                       {exam.name}
                     </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-exams" disabled>No exams available</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <Button type="submit">Add Question</Button>
         </form>
       </DialogContent>
