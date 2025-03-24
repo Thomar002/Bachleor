@@ -339,9 +339,10 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               <div
                 ref={editorRef}
                 contentEditable
-                className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                data-placeholder="Enter your question here..."
+                className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+                style={{ lineHeight: '1.5' }}
                 onInput={handleEditorChange}
-                dangerouslySetInnerHTML={{ __html: questionContent }}
               />
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Select correct answer:</h3>
