@@ -50,6 +50,7 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const [questionContent, setQuestionContent] = useState("")
+  const [newTag, setNewTag] = useState("")
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -337,6 +338,13 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
     fetchAttachments()
   }, [questionId])
 
+  const handleAddTag = () => {
+    if (newTag.trim() && !tags.includes(newTag)) {
+      setTags([...tags, newTag])
+      setNewTag("")
+    }
+  }
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
@@ -370,12 +378,26 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
             </div>
           </div>
           {/* Display current tags */}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                {tag}
-              </div>
-            ))}
+          <div className="mt-2 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                  {tag}
+                </div>
+              ))}
+            </div>
+
+            {/* Add new tag */}
+            <div className="flex gap-2 w-[200px]">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add new tag..."
+                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                className="flex-1"
+              />
+              <Button onClick={handleAddTag}>Add</Button>
+            </div>
           </div>
         </div>
         {/* Display name section */}

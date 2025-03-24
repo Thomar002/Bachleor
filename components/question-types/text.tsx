@@ -39,6 +39,7 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const answerEditorRef = useRef<HTMLDivElement>(null)
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [newTag, setNewTag] = useState("")
 
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
     const content = e.currentTarget.innerHTML;
@@ -248,6 +249,13 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     }
   }
 
+  const handleAddTag = () => {
+    if (newTag.trim() && !tags.includes(newTag)) {
+      setTags([...tags, newTag])
+      setNewTag("")
+    }
+  }
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
@@ -281,12 +289,26 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
             </div>
           </div>
           {/* Display current tags */}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                {tag}
-              </div>
-            ))}
+          <div className="mt-2 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                  {tag}
+                </div>
+              ))}
+            </div>
+
+            {/* Add new tag */}
+            <div className="flex gap-2 w-[200px]">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add new tag..."
+                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                className="flex-1"
+              />
+              <Button onClick={handleAddTag}>Add</Button>
+            </div>
           </div>
         </div>
         {/* Display name section */}

@@ -17,13 +17,13 @@ export default function LoginForm() {
     e.preventDefault()
     // Here you would normally handle authentication
     // For now, let's just navigate to the dashboard selection page
-    router.push("/dashboard")
+    router.push("/my-exams") // Changed from "/frontpage" to "/my-exams"
   }
 
   const handleFeideSignIn = () => {
     // Here you would normally handle Feide authentication
     // For now, let's just navigate to the dashboard selection page
-    router.push("/dashboard")
+    router.push("/my-exams") // Changed from "/frontpage" to "/my-exams"
   }
 
   return (
@@ -78,4 +78,5 @@ export default function LoginForm() {
     </div>
   )
 }
+
 

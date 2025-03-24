@@ -43,8 +43,18 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [newTag, setNewTag] = useState("")
 
   const editorRef = useRef<HTMLDivElement>(null)
+
+  const handleAddTag = () => {
+    if (newTag && !tags.includes(newTag)) {
+      const updatedTags = [...tags, newTag]
+      setTags(updatedTags)
+      onTagsChange?.(updatedTags)
+      setNewTag("")
+    }
+  }
 
   // Legg til disse funksjonene for rik-tekst-redigering
   const handleBold = () => {
@@ -297,12 +307,26 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               </div>
             </div>
             {/* Display current tags */}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                  {tag}
-                </div>
-              ))}
+            <div className="mt-2 space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                    {tag}
+                  </div>
+                ))}
+              </div>
+
+              {/* Add new tag */}
+              <div className="flex gap-2 w-[200px]">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add new tag..."
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddTag}>Add</Button>
+              </div>
             </div>
           </div>
 

@@ -49,6 +49,7 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
   const fileInputRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const [questionContent, setQuestionContent] = useState("")
+  const [newTag, setNewTag] = useState("")
 
   const handleSave = async () => {
     if (!questionId) return
@@ -329,6 +330,15 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
     fetchAttachments()
   }, [questionId])
 
+  const handleAddTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      const updatedTags = [...tags, newTag.trim()]
+      setTags(updatedTags)
+      handleTagsChange(updatedTags)
+      setNewTag("")
+    }
+  }
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
@@ -362,12 +372,26 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
             </div>
           </div>
           {/* Display current tags */}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                {tag}
-              </div>
-            ))}
+          <div className="mt-2 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                  {tag}
+                </div>
+              ))}
+            </div>
+
+            {/* Add new tag */}
+            <div className="flex gap-2 w-[200px]">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add new tag..."
+                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                className="flex-1"
+              />
+              <Button onClick={handleAddTag}>Add</Button>
+            </div>
           </div>
         </div>
         {/* Display name section */}
@@ -509,6 +533,26 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
         className="hidden"
         onChange={handleFileSelected}
       />
+      <div className="mt-2 space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+              {tag}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 w-[425px]">
+          <Input
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            placeholder="Add new tag..."
+            onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+            className="flex-1"
+          />
+          <Button onClick={handleAddTag}>Add</Button>
+        </div>
+      </div>
     </div>
   )
 }
