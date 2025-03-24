@@ -44,6 +44,34 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newTag, setNewTag] = useState("")
+  const [points, setPoints] = useState<number>(0);
+  const [inputValue, setInputValue] = useState<string>('');
+
+  // Add logging to track points changes
+  const logPointsChange = (value: number, source: string) => {
+    console.log(`Points changed to ${value} from ${source}`);
+  };
+
+  // Separate input handling from state updates
+  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    console.log('Input change - Raw value:', rawValue);
+
+    // Allow empty input during typing
+    if (rawValue === '') {
+      setInputValue('');
+      setPoints(0);
+      return;
+    }
+
+    // Only allow digits
+    if (/^\d+$/.test(rawValue)) {
+      setInputValue(rawValue);
+      const numValue = parseInt(rawValue, 10);
+      console.log('Setting points to:', numValue);
+      setPoints(numValue);
+    }
+  };
 
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -170,16 +198,14 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
         if (data) {
           setDisplayName(data.display_name || "")
           setQuestionContent(data.question || "")
+          setPoints(data.points || 0)
+          setInputValue(data.points?.toString() || '')
           if (editorRef.current) {
             editorRef.current.innerHTML = data.question || ""
           }
 
-          // Parse correct_answer from database
-          if (data.correct_answer && data.correct_answer.length > 0) {
-            const answer = data.correct_answer[0]?.answer
-            setCorrectAnswer(typeof answer === 'boolean' ? answer : null)
-          } else {
-            setCorrectAnswer(null)
+          if (data.correct_answer && data.correct_answer[0]) {
+            setCorrectAnswer(data.correct_answer[0].answer === "true")
           }
 
           // Parse and set tags
@@ -228,29 +254,54 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   }, [questionId])
 
   const handleSave = async () => {
-    if (!questionId) return
+    if (!questionId) return;
 
     try {
-      const correctAnswerJson = correctAnswer !== null ? [{ answer: correctAnswer }] : []
+      // Ensure we're working with the exact integer value
+      const currentPoints = Math.trunc(points); // Remove any decimal part
+      console.log('Save - Current points state:', points);
+      console.log('Save - Points to be saved:', currentPoints);
 
-      const { error } = await supabase
+      const updates = {
+        display_name: displayName,
+        question: questionContent,
+        type: "True/False",
+        correct_answer: correctAnswer !== null ? [{ answer: correctAnswer }] : [],
+        attachments: attachments,
+        points: currentPoints,
+        tags: tags
+      };
+
+      console.log('Save - Full update payload:', updates);
+
+      const { data, error } = await supabase
         .from("Questions")
-        .update({
-          display_name: displayName,
-          question: questionContent,
-          type: "True/False",
-          correct_answer: correctAnswerJson,
-          attachments: attachments
-        })
+        .update(updates)
         .eq("id", questionId)
+        .select();
 
-      if (error) throw error
-      toast.success("Question saved successfully")
-    } catch (error) {
-      console.error("Error saving question:", error)
-      toast.error("Failed to save question")
+      if (error) throw error;
+
+      if (data && data[0]) {
+        console.log('Save - Response data:', data[0]);
+        console.log('Save - Saved points value:', data[0].points);
+
+        // Only update if there's an actual difference
+        if (data[0].points !== currentPoints) {
+          console.log('Save - Points mismatch detected:', {
+            'current': currentPoints,
+            'received': data[0].points
+          });
+          setPoints(data[0].points);
+        }
+      }
+
+      toast.success("Question saved successfully");
+    } catch (error: any) {
+      console.error("Save - Error:", error);
+      toast.error(`Failed to save question: ${error.message}`);
     }
-  }
+  };
 
   useEffect(() => {
     if (editorRef.current && questionContent) {
@@ -395,6 +446,23 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                     </div>
                   </div>
                 </div>
+              </div>
+              <div className="mt-6">
+                <h2 className="text-sm font-medium text-gray-700 mb-2">Points</h2>
+                <Input
+                  type="text"
+                  value={inputValue}
+                  onChange={handlePointsChange}
+                  onBlur={(e) => {
+                    const finalValue = e.target.value === '' ? '0' : e.target.value;
+                    const numValue = parseInt(finalValue, 10);
+                    console.log('Blur - Final value:', numValue);
+                    setInputValue(finalValue);
+                    setPoints(numValue);
+                  }}
+                  className="w-24"
+                  placeholder="Points"
+                />
               </div>
               <div className="mt-4 flex justify-end">
                 <SaveQuestionButton

@@ -40,6 +40,12 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newTag, setNewTag] = useState("")
+  const [points, setPoints] = useState<number>(0);
+  const [inputValue, setInputValue] = useState<string>('');
+
+  const logPointsChange = (value: number, source: string) => {
+    console.log(`Points changed to ${value} from ${source}`);
+  };
 
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
     const content = e.currentTarget.innerHTML;
@@ -56,28 +62,32 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     const fetchQuestionData = async () => {
       if (!questionId) return
 
-      const { data, error } = await supabase
-        .from("Questions")
-        .select("*")
-        .eq("id", questionId)
-        .single()
+      try {
+        const { data, error } = await supabase
+          .from("Questions")
+          .select("*")
+          .eq("id", questionId)
+          .single()
 
-      if (error) {
+        if (error) throw error
+
+        if (data) {
+          setDisplayName(data.display_name || "")
+          setQuestionContent(data.question || "")
+          if (data.points !== undefined && data.points !== null) {
+            setPoints(data.points)
+            setInputValue(data.points.toString())
+          }
+          if (answerEditorRef.current) {
+            answerEditorRef.current.innerHTML = data.question || ""
+          }
+
+          if (data.tags) {
+            setTags(Array.isArray(data.tags) ? data.tags : [])
+          }
+        }
+      } catch (error) {
         console.error("Error fetching question data:", error)
-        return
-      }
-
-      if (data) {
-        setDisplayName(data.display_name || "")
-        // Update both the state and the editor content
-        const questionText = data.question || ""
-        setQuestionContent(questionText)
-        if (answerEditorRef.current) {
-          answerEditorRef.current.innerHTML = questionText
-        }
-        if (data.tags) {
-          setTags(Array.isArray(data.tags) ? data.tags : [])
-        }
       }
     }
 
@@ -256,6 +266,24 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     }
   }
 
+  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    console.log('Input change - Raw value:', rawValue);
+
+    if (rawValue === '') {
+      setInputValue('');
+      setPoints(0);
+      return;
+    }
+
+    if (/^\d+$/.test(rawValue)) {
+      setInputValue(rawValue);
+      const numValue = parseInt(rawValue, 10);
+      console.log('Setting points to:', numValue);
+      setPoints(numValue);
+    }
+  };
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
@@ -347,6 +375,25 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
             />
+
+            <div className="mt-6">
+              <h2 className="text-sm font-medium text-gray-700 mb-2">Points</h2>
+              <Input
+                type="text"
+                value={inputValue}
+                onChange={handlePointsChange}
+                onBlur={(e) => {
+                  const finalValue = e.target.value === '' ? '0' : e.target.value;
+                  const numValue = parseInt(finalValue, 10);
+                  console.log('Blur - Final value:', numValue);
+                  setInputValue(finalValue);
+                  setPoints(numValue);
+                }}
+                className="w-24"
+                placeholder="Points"
+              />
+            </div>
+
             <div className="mt-4 flex justify-end">
               <SaveQuestionButton
                 displayName={displayName}

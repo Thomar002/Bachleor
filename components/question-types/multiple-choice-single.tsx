@@ -27,29 +27,43 @@ interface Attachment {
 
 interface Props {
   questionName: string;
+  questionId?: number;
+  initialDisplayName?: string;
+  initialQuestionContent?: string;
+  initialOptions?: Option[];
   initialTags?: string[];
+  initialAttachments?: Attachment[];
+  initialPoints?: number;
   onTagsChange?: (tags: string[]) => void;
 }
 
-export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsChange }: Props) {
+export function MultipleChoiceSingle({
+  questionName,
+  questionId,  // This is already passed as a prop
+  initialDisplayName = "",
+  initialQuestionContent = "",
+  initialOptions = [],
+  initialTags = [],
+  initialAttachments = [],
+  initialPoints = 0,
+  onTagsChange,
+}: Props) {
   const params = useParams()
-  const questionId = params.questionId as string
-  const [displayName, setDisplayName] = useState("")
-  const [options, setOptions] = useState<Option[]>([
-    { id: "1", text: "Option 1", isCorrect: false },
-    { id: "2", text: "Option 2", isCorrect: false },
-    { id: "3", text: "Option 3", isCorrect: false },
-  ])
+  const [displayName, setDisplayName] = useState(initialDisplayName)
+  const [options, setOptions] = useState<Option[]>(initialOptions)
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false)
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false)
   const [type, setType] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>(initialTags)
   const [availableTags, setAvailableTags] = useState<string[]>([])
-  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [attachments, setAttachments] = useState<Attachment[]>(initialAttachments)
+  const [points, setPoints] = useState<number>(0)
+  const [inputValue, setInputValue] = useState<string>('')
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const questionTextareaRef = useRef<HTMLTextAreaElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
-  const [questionContent, setQuestionContent] = useState("")
+  const [questionContent, setQuestionContent] = useState(initialQuestionContent)
   const [newTag, setNewTag] = useState("")
 
   useEffect(() => {
@@ -68,6 +82,8 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
         if (data) {
           setDisplayName(data.display_name || "")
           setQuestionContent(data.question || "")
+          setPoints(data.points || 0)
+          setInputValue(data.points?.toString() || '')
           if (editorRef.current) {
             editorRef.current.innerHTML = data.question || ""
           }
@@ -75,17 +91,14 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
           // Parse options and correct_answer from database
           if (data.options && Array.isArray(data.options)) {
             const correctAnswerId = data.correct_answer?.[0]?.id
-
             const parsedOptions = data.options.map((opt: any) => ({
               id: opt.id,
               text: opt.text,
               isCorrect: opt.id === correctAnswerId
             }))
-
             setOptions(parsedOptions)
           }
 
-          // Parse and set tags
           if (data.tags) {
             const parsedTags = Array.isArray(data.tags)
               ? data.tags
@@ -102,8 +115,8 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
     }
 
     fetchQuestionData()
-    fetchAvailableTags() // Add this to fetch available tags
-  }, [questionId])
+    fetchAvailableTags()
+  }, [questionId])  // Make sure questionId is in the dependency array
 
   useEffect(() => {
     if (editorRef.current && questionContent) {
@@ -117,41 +130,52 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   };
 
   const handleSave = async () => {
-    if (!questionId) return
+    if (!questionId) return;
 
     try {
-      // Finn det korrekte svaret (option som har isCorrect = true)
-      const correctOption = options.find(opt => opt.isCorrect)
+      const currentPoints = Math.trunc(points);
+      console.log('Save - Current points state:', points);
+      console.log('Save - Points to be saved:', currentPoints);
 
-      // Konverter options til format for options-kolonnen (uten isCorrect flag)
+      // Find the correct answer and create the updates object
+      const correctOption = options.find(opt => opt.isCorrect);
       const optionsJson = options.map(opt => ({
         id: opt.id,
         text: opt.text
-      }))
-
-      // Lag correct_answer format (array med ett element siden det er single choice)
+      }));
       const correctAnswerJson = correctOption
         ? [{ id: correctOption.id, answer: correctOption.text }]
-        : []
+        : [];
 
-      const { error } = await supabase
+      const updates = {
+        display_name: displayName,
+        question: questionContent,
+        type: "Multiple Choice-single",
+        options: optionsJson,
+        correct_answer: correctAnswerJson,
+        attachments: attachments,
+        points: currentPoints,
+        tags: tags
+      };
+
+      const { data, error } = await supabase
         .from("Questions")
-        .update({
-          display_name: displayName,
-          question: questionContent,
-          type: "Multiple Choice-single",
-          options: optionsJson,
-          correct_answer: correctAnswerJson,
-          attachments: attachments
-        })
+        .update(updates)
         .eq("id", questionId)
+        .select();
 
-      if (error) throw error
+      if (error) throw error;
 
-      toast.success("Question saved successfully")
-    } catch (error) {
-      console.error("Error saving question:", error)
-      toast.error("Failed to save question")
+      if (data && data[0]) {
+        if (data[0].points !== currentPoints) {
+          setPoints(data[0].points);
+        }
+      }
+
+      toast.success("Question saved successfully");
+    } catch (error: any) {
+      console.error("Save - Error:", error);
+      toast.error(`Failed to save question: ${error.message}`);
     }
   }
 
@@ -345,6 +369,24 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
     }
   }
 
+  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    console.log('Input change - Raw value:', rawValue);
+
+    if (rawValue === '') {
+      setInputValue('');
+      setPoints(0);
+      return;
+    }
+
+    if (/^\d+$/.test(rawValue)) {
+      setInputValue(rawValue);
+      const numValue = parseInt(rawValue, 10);
+      console.log('Setting points to:', numValue);
+      setPoints(numValue);
+    }
+  };
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
@@ -467,6 +509,23 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
             <Button variant="outline" onClick={addOption} className="mt-4">
               Add option
             </Button>
+            <div className="mt-6">
+              <h2 className="text-sm font-medium text-gray-700 mb-2">Points</h2>
+              <Input
+                type="text"
+                value={inputValue}
+                onChange={handlePointsChange}
+                onBlur={(e) => {
+                  const finalValue = e.target.value === '' ? '0' : e.target.value;
+                  const numValue = parseInt(finalValue, 10);
+                  console.log('Blur - Final value:', numValue);
+                  setInputValue(finalValue);
+                  setPoints(numValue);
+                }}
+                className="w-24"
+                placeholder="Points"
+              />
+            </div>
             <div className="mt-4 flex justify-end">
               <Button onClick={handleSave}>Save</Button>
             </div>

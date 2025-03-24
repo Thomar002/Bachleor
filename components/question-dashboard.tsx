@@ -14,7 +14,7 @@ import { useParams } from "next/navigation"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RenameDialog } from "./rename-dialog"
 
-type SortField = 'created_at'
+type SortField = 'created_at' | 'points'
 type SortOrder = 'asc' | 'desc'
 
 interface Question {
@@ -24,6 +24,7 @@ interface Question {
   created_at: string
   exam_id: number
   type: string[]
+  points: number
 }
 
 export default function QuestionDashboard({ examId, examName }: { examId: number; examName: string }) {
@@ -38,6 +39,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const [selectedQuestions, setSelectedQuestions] = useState<number[]>([])
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
   const [questionToRename, setQuestionToRename] = useState<Question | null>(null)
+  const [totalPoints, setTotalPoints] = useState<number>(0)
 
   // Legg til en funksjon for å bygge riktig URL
   const getQuestionUrl = (questionId: number) => {
@@ -117,9 +119,15 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   }
 
   const sortedQuestions = [...filteredQuestions].sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime()
-    const dateB = new Date(b.created_at).getTime()
-    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+    if (sortField === 'points') {
+      const pointsA = a.points || 0
+      const pointsB = b.points || 0
+      return sortOrder === 'asc' ? pointsA - pointsB : pointsB - pointsA
+    } else {
+      const dateA = new Date(a.created_at).getTime()
+      const dateB = new Date(b.created_at).getTime()
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+    }
   })
 
   async function handleDelete(questionId: number) {
@@ -252,6 +260,12 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
     }
   }
 
+  useEffect(() => {
+    // Calculate total points whenever questions array changes
+    const points = questions.reduce((sum, question) => sum + (question.points || 0), 0);
+    setTotalPoints(points);
+  }, [questions]);
+
   return (
     <>
       <main className="flex-1 p-8">
@@ -307,22 +321,25 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                     className="pl-10 w-full"
                   />
                 </div>
+                <div className="flex items-center text-gray-700 font-medium">
+                  Total points: {totalPoints}
+                </div>
                 <div className="flex-1" /> {/* Spacer */}
+                <Button
+                  className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
+                  onClick={() => setIsCreateOverlayOpen(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Question
+                </Button>
               </>
             )}
-            <Button
-              className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
-              onClick={() => setIsCreateOverlayOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Question
-            </Button>
           </div>
 
           {/* Questions Table */}
           <div className="bg-[#B8C2D1] rounded-lg overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+            <div className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
               <div>
                 <Checkbox
                   checked={selectedQuestions.length === sortedQuestions.length && sortedQuestions.length > 0}
@@ -332,7 +349,12 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
               <div>Name</div>
               <div>Type</div>
               <div>Tags</div>
-              <div>Exam</div>
+              <div
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => handleSort('points')}
+              >
+                Points {getSortIcon('points')}
+              </div>
               <div
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={() => handleSort('created_at')}
@@ -352,7 +374,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                 sortedQuestions.map((question) => (
                   <div
                     key={question.id}
-                    className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
+                    className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
                   >
                     <div>
                       <Checkbox
@@ -368,8 +390,8 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                     </Link>
                     <div>{Array.isArray(question.type) ? question.type.join(", ") : (question.type || "")}</div>
                     <div>{question.tags.join(", ")}</div>
-                    <div>{examName}</div>
-                    <div>{new Date(question.created_at).toLocaleDateString("no-NO")}</div>
+                    <div>{question.points || 0}</div>
+                    <div>{new Date(question.created_at).toLocaleDateString()}</div>
                     <div className="flex justify-end">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

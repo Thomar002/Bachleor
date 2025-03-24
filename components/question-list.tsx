@@ -23,9 +23,10 @@ interface Question {
   exam_name: string
   created_at: string
   tags: string[]
+  points: number
 }
 
-type SortField = 'created_at'
+type SortField = 'created_at' | 'points'
 type SortOrder = 'asc' | 'desc'
 
 export default function QuestionList() {
@@ -109,7 +110,8 @@ export default function QuestionList() {
           exam_id: question.exam_id,
           exam_name: examMap[question.exam_id] || "No exam",
           created_at: question.created_at,
-          tags: questionTags
+          tags: questionTags,
+          points: question.points || 0
         };
       });
 
@@ -266,17 +268,24 @@ export default function QuestionList() {
       (!selectedTag || (selectedTag === "none" ? question.tags.length === 0 : question.tags.includes(selectedTag)))
     )
     .sort((a, b) => {
-      const dateA = new Date(a.created_at).getTime()
-      const dateB = new Date(b.created_at).getTime()
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+      if (sortField === 'points') {
+        const pointsA = a.points || 0
+        const pointsB = b.points || 0
+        return sortOrder === 'asc' ? pointsA - pointsB : pointsB - pointsA
+      } else {
+        const dateA = new Date(a.created_at).getTime()
+        const dateB = new Date(b.created_at).getTime()
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+      }
     })
 
-  const handleCreateQuestion = async (name: string, tags: string[], examId: string | null) => {
+  const handleCreateQuestion = async (name: string, tags: string[], examId: string | null, points: number) => {
     try {
       const newQuestion = {
         name,
         tags,
         exam_id: examId ? parseInt(examId) : null,
+        points
       }
 
       const { data, error } = await supabase
@@ -391,7 +400,7 @@ export default function QuestionList() {
       {/* Questions Table */}
       <div className="bg-[#B8C2D1] rounded-lg overflow-hidden">
         {/* Table Header */}
-        <div className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+        <div className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
           <div>
             <Checkbox
               checked={selectedQuestions.length === filteredQuestions.length && filteredQuestions.length > 0}
@@ -401,6 +410,12 @@ export default function QuestionList() {
           <div>Name</div>
           <div>Type</div>
           <div>Tags</div>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => handleSort('points')}
+          >
+            Points {getSortIcon('points')}
+          </div>
           <div>Exam</div>
           <div
             className="flex items-center gap-2 cursor-pointer"
@@ -429,7 +444,7 @@ export default function QuestionList() {
             {filteredQuestions.map((question) => (
               <div
                 key={question.id}
-                className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
+                className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
               >
                 <div>
                   <Checkbox
@@ -445,6 +460,7 @@ export default function QuestionList() {
                 </button>
                 <div>{question.type.join(", ")}</div>
                 <div>{question.tags.join(", ")}</div>
+                <div>{question.points || 0}</div>
                 <div>
                   <Select
                     value={question.exam_id?.toString() || "none"}

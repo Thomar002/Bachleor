@@ -29,9 +29,10 @@ interface Props {
   questionName: string;
   initialTags?: string[];
   onTagsChange?: (tags: string[]) => void;
+  initialPoints?: number;
 }
 
-export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsChange }: Props) {
+export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsChange, initialPoints }: Props) {
   const params = useParams()
   const questionId = params.questionId as string
   const [displayName, setDisplayName] = useState("")
@@ -50,40 +51,70 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
   const editorRef = useRef<HTMLDivElement>(null)
   const [questionContent, setQuestionContent] = useState("")
   const [newTag, setNewTag] = useState("")
+  const [points, setPoints] = useState<number>(initialPoints || 0);
+  const [inputValue, setInputValue] = useState<string>('');
+
+  const logPointsChange = (value: number, source: string) => {
+    console.log(`Points changed to ${value} from ${source}`);
+  };
 
   const handleSave = async () => {
-    if (!questionId) return
+    if (!questionId) return;
 
     try {
-      const correctOptions = options.filter(opt => opt.isCorrect)
+      const currentPoints = Math.trunc(points);
+
+      const correctOptions = options.filter(opt => opt.isCorrect);
       const optionsJson = options.map(opt => ({
         id: opt.id,
         text: opt.text
-      }))
+      }));
       const correctAnswerJson = correctOptions.map(opt => ({
         id: opt.id,
         answer: opt.text
-      }))
+      }));
+
+      const updates = {
+        display_name: displayName,
+        question: questionContent,
+        type: "Multiple Choice-multi",
+        options: optionsJson,
+        correct_answer: correctAnswerJson,
+        attachments: attachments,
+        points: currentPoints,
+        tags: tags
+      };
 
       const { error } = await supabase
         .from("Questions")
-        .update({
-          display_name: displayName,
-          question: questionContent,
-          type: "Multiple Choice-multi",
-          options: optionsJson,
-          correct_answer: correctAnswerJson,
-          attachments: attachments
-        })
+        .update(updates)
         .eq("id", questionId)
 
       if (error) throw error
       toast.success("Question saved successfully")
-    } catch (error) {
-      console.error("Error saving question:", error)
-      toast.error("Failed to save question")
+    } catch (error: any) {
+      console.error("Save - Error:", error);
+      toast.error(`Failed to save question: ${error.message}`);
     }
   }
+
+  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    console.log('Input change - Raw value:', rawValue);
+
+    if (rawValue === '') {
+      setInputValue('');
+      setPoints(0);
+      return;
+    }
+
+    if (/^\d+$/.test(rawValue)) {
+      setInputValue(rawValue);
+      const numValue = parseInt(rawValue, 10);
+      console.log('Setting points to:', numValue);
+      setPoints(numValue);
+    }
+  };
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -101,6 +132,8 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
         if (data) {
           setDisplayName(data.display_name || "")
           setQuestionContent(data.question || "")
+          setPoints(data.points || 0)
+          setInputValue(data.points?.toString() || '')
           if (editorRef.current) {
             editorRef.current.innerHTML = data.question || ""
           }
@@ -459,6 +492,24 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
               Add option
             </Button>
 
+            <div className="mt-6">
+              <h2 className="text-sm font-medium text-gray-700 mb-2">Points</h2>
+              <Input
+                type="text"
+                value={inputValue}
+                onChange={handlePointsChange}
+                onBlur={(e) => {
+                  const finalValue = e.target.value === '' ? '0' : e.target.value;
+                  const numValue = parseInt(finalValue, 10);
+                  console.log('Blur - Final value:', numValue);
+                  setInputValue(finalValue);
+                  setPoints(numValue);
+                }}
+                className="w-24"
+                placeholder="Points"
+              />
+            </div>
+
             <div className="mt-4 flex justify-end">
               <Button onClick={handleSave}>Save</Button>
             </div>
@@ -533,26 +584,6 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
         className="hidden"
         onChange={handleFileSelected}
       />
-      <div className="mt-2 space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
-              {tag}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex gap-2 w-[425px]">
-          <Input
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            placeholder="Add new tag..."
-            onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-            className="flex-1"
-          />
-          <Button onClick={handleAddTag}>Add</Button>
-        </div>
-      </div>
     </div>
   )
 }

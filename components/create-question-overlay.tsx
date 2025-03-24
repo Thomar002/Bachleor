@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabaseClient"
 interface CreateQuestionOverlayProps {
   isOpen: boolean
   onClose: () => void
-  onCreateQuestion: (name: string, tags: string[], examId: string | null) => void
+  onCreateQuestion: (name: string, tags: string[], examId: string | null, points: number) => void
   showExamField?: boolean
 }
 
@@ -21,6 +21,7 @@ export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion, showE
   const [tags, setTags] = useState("")
   const [selectedExam, setSelectedExam] = useState<string | null>(null)
   const [exams, setExams] = useState<{ id: number; name: string }[]>([])
+  const [points, setPoints] = useState<number>(0)
 
   useEffect(() => {
     if (isOpen && showExamField) {
@@ -33,6 +34,7 @@ export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion, showE
       setName("")
       setTags("")
       setSelectedExam(null)
+      setPoints(0)
     }
   }, [isOpen])
 
@@ -56,11 +58,13 @@ export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion, showE
         .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag),
-      showExamField ? selectedExam : null  // Always pass a value, null if no exam selected
+      showExamField ? selectedExam : null,
+      points
     )
     setName("")
     setTags("")
     setSelectedExam(null)
+    setPoints(0)
     onClose()
   }
 
@@ -98,6 +102,17 @@ export function CreateQuestionOverlay({ isOpen, onClose, onCreateQuestion, showE
               </Select>
             </div>
           )}
+          <div className="space-y-2">
+            <Label htmlFor="points">Points</Label>
+            <Input
+              id="points"
+              type="number"
+              min="0"
+              value={points}
+              onChange={(e) => setPoints(Number(e.target.value))}
+              className="w-32"
+            />
+          </div>
           <Button type="submit">Add Question</Button>
         </form>
       </DialogContent>

@@ -25,6 +25,7 @@ interface Props {
   questionName: string;
   initialTags?: string[];
   onTagsChange?: (tags: string[]) => void;
+  initialPoints?: number;
 }
 
 interface Attachment {
@@ -33,7 +34,7 @@ interface Attachment {
   name: string;
 }
 
-export function Equation({ questionName, initialTags = [], onTagsChange }: Props) {
+export function Equation({ questionName, initialTags = [], onTagsChange, initialPoints }: Props) {
   const router = useRouter()
   const params = useParams()
   const questionId = params.questionId as string
@@ -50,6 +51,12 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newTag, setNewTag] = useState("")
+  const [points, setPoints] = useState<number>(initialPoints || 0)
+  const [inputValue, setInputValue] = useState<string>('');
+
+  const logPointsChange = (value: number, source: string) => {
+    console.log(`Points changed to ${value} from ${source}`);
+  };
 
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -59,6 +66,24 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
       setNewTag("")
     }
   }
+
+  const handlePointsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    console.log('Input change - Raw value:', rawValue);
+
+    if (rawValue === '') {
+      setInputValue('');
+      setPoints(0);
+      return;
+    }
+
+    if (/^\d+$/.test(rawValue)) {
+      setInputValue(rawValue);
+      const numValue = parseInt(rawValue, 10);
+      console.log('Setting points to:', numValue);
+      setPoints(numValue);
+    }
+  };
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -76,6 +101,9 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
         if (data) {
           setDisplayName(data.display_name || "")
           setEquation(data.question || "")
+          setPoints(data.points || 0)
+          setInputValue(data.points?.toString() || '')
+          setAnswer(data.correct_answer?.[0]?.answer || "")
 
           // Håndter correct_answer
           if (data.correct_answer && Array.isArray(data.correct_answer) && data.correct_answer.length > 0) {
@@ -112,7 +140,8 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
           question: equation,
           type: "Equation",
           correct_answer: [{ answer: answer }],
-          attachments: attachments
+          attachments: attachments,
+          points: points
         })
         .eq("id", questionId)
 
@@ -525,10 +554,33 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
                 <Input
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Enter answer..."
+                  className="w-full"
                 />
               </div>
+
+              <div className="mt-6">
+                <h2 className="text-sm font-medium text-gray-700 mb-2">Points</h2>
+                <Input
+                  type="text"
+                  value={inputValue}
+                  onChange={handlePointsChange}
+                  onBlur={(e) => {
+                    const finalValue = e.target.value === '' ? '0' : e.target.value;
+                    const numValue = parseInt(finalValue, 10);
+                    console.log('Blur - Final value:', numValue);
+                    setInputValue(finalValue);
+                    setPoints(numValue);
+                  }}
+                  className="w-24"
+                  placeholder="Points"
+                />
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <Button onClick={handleSave}>Save</Button>
+              </div>
             </div>
+            {/* Remove this duplicate save button section
             <div className="mt-4 flex justify-end">
               <SaveQuestionButton
                 displayName={displayName}
@@ -537,6 +589,7 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
                 onSave={handleSave}
               />
             </div>
+            */}
           </div>
 
           {attachments.length > 0 && (
