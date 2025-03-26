@@ -92,7 +92,11 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
               ? JSON.parse(question.tags)
               : []
             : [],
-        type: Array.isArray(question.type) ? question.type : []
+        type: Array.isArray(question.type)
+          ? question.type
+          : typeof question.type === "string"
+            ? [question.type]
+            : []
       }))
       setQuestions(processedData)
     }
