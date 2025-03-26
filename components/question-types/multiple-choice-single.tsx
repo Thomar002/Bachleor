@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useParams } from "next/navigation"
 import { toast } from 'sonner'
 import { FileUploadHandler } from "../file-upload-handler"
+import { SaveQuestionButton } from "@/components/save-question-button"
 
 interface Option {
   id: string
@@ -527,7 +528,47 @@ export function MultipleChoiceSingle({
               />
             </div>
             <div className="mt-4 flex justify-end">
-              <Button onClick={handleSave}>Save</Button>
+              <SaveQuestionButton
+                displayName={displayName}
+                question={questionContent}
+                type="Multiple Choice-single"
+                onSave={async () => {
+                  if (!questionId) return;
+
+                  try {
+                    const correctOption = options.find(opt => opt.isCorrect);
+                    const optionsJson = options.map(opt => ({
+                      id: opt.id,
+                      text: opt.text
+                    }));
+                    const correctAnswerJson = correctOption
+                      ? [{ id: correctOption.id, answer: correctOption.text }]
+                      : [];
+
+                    const updates = {
+                      display_name: displayName,
+                      question: questionContent,
+                      type: "Multiple Choice-single",
+                      options: optionsJson,
+                      correct_answer: correctAnswerJson,
+                      attachments: attachments,
+                      points: points,
+                      tags: tags
+                    };
+
+                    const { error } = await supabase
+                      .from("Questions")
+                      .update(updates)
+                      .eq("id", questionId);
+
+                    if (error) throw error;
+                    toast.success("Question saved successfully");
+                  } catch (error: any) {
+                    console.error("Error saving question:", error);
+                    toast.error(`Failed to save question: ${error.message}`);
+                  }
+                }}
+              />
             </div>
           </div>
           {attachments.length > 0 && (

@@ -16,14 +16,14 @@ export default function LoginForm() {
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault()
     // Here you would normally handle authentication
-    // For now, let's just navigate to the dashboard selection page
-    router.push("/my-exams") // Changed from "/frontpage" to "/my-exams"
+    // For now, let's just navigate to the frontpage
+    router.push("/frontpage")
   }
 
   const handleFeideSignIn = () => {
     // Here you would normally handle Feide authentication
-    // For now, let's just navigate to the dashboard selection page
-    router.push("/my-exams") // Changed from "/frontpage" to "/my-exams"
+    // For now, let's just navigate to the frontpage
+    router.push("/frontpage")
   }
 
   return (
@@ -78,5 +78,6 @@ export default function LoginForm() {
     </div>
   )
 }
+
 
 
