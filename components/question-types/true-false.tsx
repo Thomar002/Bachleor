@@ -520,19 +520,19 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                       <span>False</span>
                     </div>
                   </div>
-                  <div className="mt-8">  {/* Changed from mt-4 to mt-8 for more spacing */}
+                  <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Points
                     </label>
                     <Input
                       type="number"
-                      value={currentPoints}
+                      value={currentPoints || ''}
                       onChange={(e) => {
-                        const value = parseInt(e.target.value) || 0
+                        const value = e.target.value === '' ? 0 : parseInt(e.target.value)
                         setCurrentPoints(value)
                         setPoints(value)
                       }}
-                      className="w-24"
+                      className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>

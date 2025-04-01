@@ -481,13 +481,13 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               </label>
               <Input
                 type="number"
-                value={currentPoints}
+                value={currentPoints || ''}
                 onChange={(e) => {
-                  const value = parseInt(e.target.value) || 0
+                  const value = e.target.value === '' ? 0 : parseInt(e.target.value)
                   setCurrentPoints(value)
                   setPoints(value)
                 }}
-                className="w-24"
+                className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
             <div className="mt-4 flex justify-end">
