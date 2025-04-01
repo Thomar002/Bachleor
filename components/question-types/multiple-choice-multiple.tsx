@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Check, Trash2, Menu, Bot, Tag, X } from "lucide-react"
+import { Check, Trash2, Menu, Bot, Tag, X, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabaseClient"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import { FileUploadHandler } from "../file-upload-handler"
+import { useRouter } from "next/navigation"
+import { AICreatorOverlay } from "@/components/ai-creator-overlay"
 
 interface Option {
   id: string
@@ -23,6 +25,12 @@ interface Attachment {
   type: 'image' | 'video' | 'file';
   url: string;
   name: string;
+}
+
+interface Question {
+  id: string;
+  type: string[];
+  exam_id?: number;
 }
 
 interface Props {
@@ -52,6 +60,10 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
   const [newTag, setNewTag] = useState("")
   const [currentPoints, setCurrentPoints] = useState<number>(0)
   const [points, setPoints] = useState<number>(0)
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [currentIndex, setCurrentIndex] = useState<number>(0)
+  const router = useRouter()
+  const [isAICreatorOpen, setIsAICreatorOpen] = useState(false)
 
   const handleSave = async () => {
     if (!questionId) return
@@ -366,34 +378,122 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
     fetchCurrentPoints()
   }, [questionId])
 
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      const { examId } = params
+      let query = supabase.from("Questions").select("*")
+
+      if (examId) {
+        query = query.eq("exam_id", examId)
+      } else {
+        query = query.is("exam_id", null)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error("Error fetching questions:", error)
+        return
+      }
+
+      if (data) {
+        setQuestions(data)
+        const index = data.findIndex(q => q.id === questionId)
+        setCurrentIndex(index)
+      }
+    }
+
+    fetchQuestions()
+  }, [questionId, params])
+
+  const navigateQuestion = (direction: 'prev' | 'next') => {
+    const newIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1
+
+    if (newIndex >= 0 && newIndex < questions.length) {
+      const question = questions[newIndex]
+      const { examId } = params
+      const baseUrl = examId
+        ? `/my-exams/${examId}/questions`
+        : '/my-questions'
+
+      const typeToPath: Record<string, string> = {
+        "True/False": "true-false",
+        "Multiple Choice-single": "multiple-choice-single",
+        "Multiple Choice-multi": "multiple-choice-multiple",
+        "Equation": "equation",
+        "Text": "text"
+      }
+
+      const type = question.type[0]
+      const path = typeToPath[type] || "text"
+
+      router.push(`${baseUrl}/${question.id}/${path}`)
+    }
+  }
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
         <div className="p-4">
-          <h1 className="text-xl font-semibold mb-4">{questionName}</h1>
-          <Separator className="my-4" />
-          <div className="flex gap-4">
-            <div className="flex flex-col items-center">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-semibold">{questionName}</h1>
+            <div className="flex gap-2">
               <Button
-                onClick={() => setIsTypeDialogOpen(true)}
+                variant="outline"
+                onClick={() => navigateQuestion('prev')}
+                disabled={currentIndex === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigateQuestion('next')}
+                disabled={currentIndex === questions.length - 1}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <Separator className="my-4" />
+          <div className="flex justify-between items-start">
+            <div className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <Button
+                  onClick={() => setIsTypeDialogOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Menu className="h-5 w-5" />
+                  Question Type
+                </Button>
+                <span className="text-sm text-gray-600 mt-1">Multiple Choice (Multiple)</span>
+              </div>
+              <Button
+                onClick={() => setIsTagDialogOpen(true)}
                 className="flex items-center gap-2"
               >
-                <Menu className="h-5 w-5" />
-                Question Type
+                <Tag className="h-5 w-5" />
+                Tags ({tags.length})
               </Button>
-              <span className="text-sm text-gray-600 mt-1">Multiple Choice (Multiple)</span>
+              <div className="flex flex-col items-center">
+                <Button
+                  className="flex items-center gap-2"
+                  onClick={() => setIsAICreatorOpen(true)}
+                >
+                  <Bot className="h-5 w-5" />
+                  AI creator
+                </Button>
+                <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
+              </div>
             </div>
-            <Button
-              onClick={() => setIsTagDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Tag className="h-5 w-5" />
-              Tags ({tags.length})
-            </Button>
             <div className="flex flex-col items-center">
-              <Button className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                AI creator
+              <Button
+                className="bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white flex items-center gap-2"
+                onClick={() => {
+                  router.push('/questions/create')
+                }}
+              >
+                <Plus className="h-5 w-5" />
+                Create Question
               </Button>
               <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
             </div>
@@ -585,6 +685,10 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
           ))}
         </div>
       </div>
+      <AICreatorOverlay
+        isOpen={isAICreatorOpen}
+        onClose={() => setIsAICreatorOpen(false)}
+      />
     </div>
   )
 }
