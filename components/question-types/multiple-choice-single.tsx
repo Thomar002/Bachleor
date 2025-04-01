@@ -51,6 +51,8 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   const editorRef = useRef<HTMLDivElement>(null)
   const [questionContent, setQuestionContent] = useState("")
   const [newTag, setNewTag] = useState("")
+  const [currentPoints, setCurrentPoints] = useState<number>(0)
+  const [points, setPoints] = useState<number>(0)
 
   useEffect(() => {
     const fetchQuestionData = async () => {
@@ -142,7 +144,8 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
           type: "Multiple Choice-single",
           options: optionsJson,
           correct_answer: correctAnswerJson,
-          attachments: attachments
+          attachments: attachments,
+          points: points
         })
         .eq("id", questionId)
 
@@ -338,6 +341,30 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
     fetchAttachments()
   }, [questionId])
 
+  useEffect(() => {
+    const fetchCurrentPoints = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("points")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching points:", error)
+        return
+      }
+
+      if (data && data.points !== null) {
+        setCurrentPoints(data.points)
+        setPoints(data.points)
+      }
+    }
+
+    fetchCurrentPoints()
+  }, [questionId])
+
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag)) {
       setTags([...tags, newTag])
@@ -464,9 +491,26 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
               ))}
             </div>
 
-            <Button variant="outline" onClick={addOption} className="mt-4">
+            <Button variant="outline" onClick={addOption} className="mt-4 mb-8">
               Add option
             </Button>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Points
+              </label>
+              <Input
+                type="number"
+                value={currentPoints}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0
+                  setCurrentPoints(value)
+                  setPoints(value)
+                }}
+                className="w-24"
+              />
+            </div>
+
             <div className="mt-4 flex justify-end">
               <Button onClick={handleSave}>Save</Button>
             </div>

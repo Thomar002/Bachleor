@@ -19,6 +19,7 @@ export interface Question {
   content: string
   tags: string[]
   exam_id: string
+  points: number
 }
 
 export interface Subject {

@@ -50,6 +50,8 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newTag, setNewTag] = useState("")
+  const [currentPoints, setCurrentPoints] = useState<number>(0)
+  const [points, setPoints] = useState<number>(0)
 
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -366,6 +368,30 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
     }
   }, []);
 
+  useEffect(() => {
+    const fetchCurrentPoints = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("points")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching points:", error)
+        return
+      }
+
+      if (data && data.points !== null) {
+        setCurrentPoints(data.points)
+        setPoints(data.points) // Update the points state as well
+      }
+    }
+
+    fetchCurrentPoints()
+  }, [questionId])
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
@@ -526,6 +552,22 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   placeholder="Enter answer..."
+                />
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Points
+                </label>
+                <Input
+                  type="number"
+                  value={currentPoints}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0
+                    setCurrentPoints(value)
+                    setPoints(value)
+                  }}
+                  className="w-24"
                 />
               </div>
             </div>

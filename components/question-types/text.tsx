@@ -40,6 +40,8 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newTag, setNewTag] = useState("")
+  const [currentPoints, setCurrentPoints] = useState<number>(0)
+  const [points, setPoints] = useState<number>(0)
 
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
     const content = e.currentTarget.innerHTML;
@@ -229,6 +231,30 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     fetchAttachments()
   }, [questionId])
 
+  useEffect(() => {
+    const fetchCurrentPoints = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("points")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching points:", error)
+        return
+      }
+
+      if (data && data.points !== null) {
+        setCurrentPoints(data.points)
+        setPoints(data.points)
+      }
+    }
+
+    fetchCurrentPoints()
+  }, [questionId])
+
   const handleSaveQuestion = async () => {
     if (!questionId) return
 
@@ -343,10 +369,25 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               ref={answerEditorRef}
               contentEditable
               data-placeholder="Enter your question here..."
-              className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-8"
+              className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-4"
               style={{ lineHeight: '1.5' }}
               onInput={handleEditorChange}
             />
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Points
+              </label>
+              <Input
+                type="number"
+                value={currentPoints}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0
+                  setCurrentPoints(value)
+                  setPoints(value)
+                }}
+                className="w-24"
+              />
+            </div>
             <div className="mt-4 flex justify-end">
               <SaveQuestionButton
                 displayName={displayName}
@@ -363,7 +404,8 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
                         question: questionContent,
                         type: "text",
                         tags: tags,
-                        attachments: attachments
+                        attachments: attachments,
+                        points: points
                       })
                       .eq("id", questionId)
 

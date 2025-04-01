@@ -24,6 +24,7 @@ interface Question {
   exam_name: string
   created_at: string
   tags: string[]
+  points: number
 }
 
 type SortField = 'created_at'
@@ -112,7 +113,8 @@ export default function QuestionList() {
           exam_id: question.exam_id,
           exam_name: examMap[question.exam_id] || "No exam",
           created_at: question.created_at,
-          tags: questionTags
+          tags: questionTags,
+          points: question.points || 0
         };
       });
 
@@ -396,7 +398,7 @@ export default function QuestionList() {
       {/* Questions Table */}
       <div className="bg-[#B8C2D1] rounded-lg overflow-hidden">
         {/* Table Header */}
-        <div className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+        <div className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
           <div>
             <Checkbox
               checked={selectedQuestions.length === filteredQuestions.length && filteredQuestions.length > 0}
@@ -406,6 +408,7 @@ export default function QuestionList() {
           <div>Name</div>
           <div>Type</div>
           <div>Tags</div>
+          <div>Points</div>
           <div>Exam</div>
           <div
             className="flex items-center gap-2 cursor-pointer"
@@ -434,7 +437,7 @@ export default function QuestionList() {
             {filteredQuestions.map((question) => (
               <div
                 key={question.id}
-                className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
+                className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
               >
                 <div>
                   <Checkbox
@@ -450,10 +453,11 @@ export default function QuestionList() {
                 </button>
                 <div>{question.type.join(", ")}</div>
                 <div>{question.tags.join(", ")}</div>
+                <div>{question.points || 0}</div>
                 <div>
                   <Select
                     value={question.exam_id?.toString() || "none"}
-                    onValueChange={(value) => handleExamChange(question.id, value)}
+                    onValueChange={(value) => handleExamChange(question.id, value === "none" ? null : value)}
                   >
                     <SelectTrigger className={selectTriggerStyles}>
                       <SelectValue>

@@ -44,6 +44,8 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newTag, setNewTag] = useState("")
+  const [currentPoints, setCurrentPoints] = useState<number>(0)
+  const [points, setPoints] = useState<number>(0)
 
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -191,6 +193,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                 : []
             setTags(parsedTags)
           }
+          setPoints(data.points || 0)
         }
       } catch (error) {
         console.error("Error fetching question:", error)
@@ -227,6 +230,30 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
     fetchAttachments()
   }, [questionId])
 
+  useEffect(() => {
+    const fetchCurrentPoints = async () => {
+      if (!questionId) return
+
+      const { data, error } = await supabase
+        .from("Questions")
+        .select("points")
+        .eq("id", questionId)
+        .single()
+
+      if (error) {
+        console.error("Error fetching points:", error)
+        return
+      }
+
+      if (data && data.points !== null) {
+        setCurrentPoints(data.points)
+        setPoints(data.points)
+      }
+    }
+
+    fetchCurrentPoints()
+  }, [questionId])
+
   const handleSave = async () => {
     if (!questionId) return
 
@@ -240,7 +267,8 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
           question: questionContent,
           type: "True/False",
           correct_answer: correctAnswerJson,
-          attachments: attachments
+          attachments: attachments,
+          points: points
         })
         .eq("id", questionId)
 
@@ -368,8 +396,8 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                 style={{ lineHeight: '1.5' }}
                 onInput={handleEditorChange}
               />
-              <div className="mt-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Select correct answer:</h3>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-700">Select correct answer:</h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-4">
                     <div className="flex-1 flex items-center gap-4">
@@ -393,6 +421,21 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                       </div>
                       <span>False</span>
                     </div>
+                  </div>
+                  <div className="mt-8">  {/* Changed from mt-4 to mt-8 for more spacing */}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Points
+                    </label>
+                    <Input
+                      type="number"
+                      value={currentPoints}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 0
+                        setCurrentPoints(value)
+                        setPoints(value)
+                      }}
+                      className="w-24"
+                    />
                   </div>
                 </div>
               </div>

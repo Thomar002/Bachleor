@@ -24,6 +24,7 @@ interface Question {
   created_at: string
   exam_id: number
   type: string[]
+  points: number
 }
 
 export default function QuestionDashboard({ examId, examName }: { examId: number; examName: string }) {
@@ -38,15 +39,30 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
   const [selectedQuestions, setSelectedQuestions] = useState<number[]>([])
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
   const [questionToRename, setQuestionToRename] = useState<Question | null>(null)
+  const [totalPoints, setTotalPoints] = useState(0)
 
   // Legg til en funksjon for å bygge riktig URL
-  const getQuestionUrl = (questionId: number) => {
-    // Hvis vi er i subjects-ruten
-    if (params.subjectId) {
-      return `/subjects/${params.subjectId}/exams/${examId}/questions/${questionId}/text`
+  const getQuestionUrl = (questionId: number, questionType: string[]) => {
+    // Map the question type to the correct route path
+    const typeToPath: Record<string, string> = {
+      "True/False": "true-false",
+      "Multiple Choice-single": "multiple-choice-single",
+      "Multiple Choice-multi": "multiple-choice-multiple",
+      "Equation": "equation",
+      "Text": "text"
     }
-    // Hvis vi er i my-exams-ruten
-    return `/my-exams/${examId}/questions/${questionId}/text`
+
+    // Get the first type from the array and map it to the correct path
+    // Default to "text" if no valid type is found
+    const type = questionType[0]
+    const path = typeToPath[type] || "text"
+
+    // If we are in subjects route
+    if (params.subjectId) {
+      return `/subjects/${params.subjectId}/exams/${examId}/questions/${questionId}/${path}`
+    }
+    // If we are in my-exams route
+    return `/my-exams/${examId}/questions/${questionId}/${path}`
   }
 
   // 3. Only fetch questions if examId is valid
@@ -90,9 +106,18 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
               ? JSON.parse(question.tags)
               : []
             : [],
-        type: Array.isArray(question.type) ? question.type : []
+        type: Array.isArray(question.type)
+          ? question.type
+          : typeof question.type === "string"
+            ? [question.type]  // If it's a string, wrap it in an array
+            : [],
+        points: question.points || 0
       }))
       setQuestions(processedData)
+
+      // Calculate total points
+      const total = processedData.reduce((sum, question) => sum + (question.points || 0), 0)
+      setTotalPoints(total)
     }
   }
 
@@ -260,6 +285,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
               <h1 className="text-3xl font-bold">{examName}</h1>
+              <span className="text-xl">Total points: {totalPoints}</span>
             </div>
           </div>
 
@@ -322,7 +348,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
           {/* Questions Table */}
           <div className="bg-[#B8C2D1] rounded-lg overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+            <div className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
               <div>
                 <Checkbox
                   checked={selectedQuestions.length === sortedQuestions.length && sortedQuestions.length > 0}
@@ -332,7 +358,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
               <div>Name</div>
               <div>Type</div>
               <div>Tags</div>
-              <div>Exam</div>
+              <div>Points</div> {/* New points column */}
               <div
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={() => handleSort('created_at')}
@@ -352,7 +378,7 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                 sortedQuestions.map((question) => (
                   <div
                     key={question.id}
-                    className="grid grid-cols-[48px_1fr_200px_200px_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
+                    className="grid grid-cols-[48px_1fr_200px_200px_100px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
                   >
                     <div>
                       <Checkbox
@@ -361,14 +387,18 @@ export default function QuestionDashboard({ examId, examName }: { examId: number
                       />
                     </div>
                     <Link
-                      href={getQuestionUrl(question.id)}
+                      href={getQuestionUrl(question.id, Array.isArray(question.type) ? question.type : [question.type])}
                       className="hover:underline"
                     >
                       {question.name}
                     </Link>
-                    <div>{Array.isArray(question.type) ? question.type.join(", ") : (question.type || "")}</div>
+                    <div>
+                      {Array.isArray(question.type)
+                        ? question.type.join(", ")
+                        : question.type || ""}
+                    </div>
                     <div>{question.tags.join(", ")}</div>
-                    <div>{examName}</div>
+                    <div>{question.points || 0}</div>
                     <div>{new Date(question.created_at).toLocaleDateString("no-NO")}</div>
                     <div className="flex justify-end">
                       <DropdownMenu>
