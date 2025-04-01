@@ -541,17 +541,6 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
             </div>
           ))}
         </div>
-
-        <div className="flex gap-2 w-[425px]">
-          <Input
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            placeholder="Add new tag..."
-            onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-            className="flex-1"
-          />
-          <Button onClick={handleAddTag}>Add</Button>
-        </div>
       </div>
     </div>
   )

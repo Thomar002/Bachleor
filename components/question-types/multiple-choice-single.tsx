@@ -112,8 +112,8 @@ export function MultipleChoiceSingle({ questionName, initialTags = [], onTagsCha
   }, []); // Kjører bare én gang ved innlasting
 
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const content = e.currentTarget.innerHTML;
-    setQuestionContent(content);
+    const content = e.currentTarget.innerHTML
+    setQuestionContent(content)
   };
 
   const handleSave = async () => {
