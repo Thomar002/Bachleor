@@ -462,7 +462,12 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
       <div className="border-b bg-white">
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold">{questionName}</h1>
+            <div className="flex items-center gap-4">
+              <Button variant="outline">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-xl font-semibold">{questionName}</h1>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"

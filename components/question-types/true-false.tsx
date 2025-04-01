@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { QuestionType } from "@/types"
 import { FileUploadHandler } from "../file-upload-handler"
 import { AICreatorOverlay } from "@/components/ai-creator-overlay"
+import Link from "next/link"
 
 interface Attachment {
   type: 'image' | 'video' | 'file'
@@ -38,6 +39,25 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   const params = useParams()
   const questionId = params.questionId as string
   const router = useRouter()
+
+  // Determine the back link based on the current route
+  const getBackLink = () => {
+    if (params.examId) {
+      if (params.subjectId) {
+        return `/subjects/${params.subjectId}/exams/${params.examId}`
+      }
+      return `/my-exams/${params.examId}`
+    }
+    return '/my-questions'
+  }
+
+  // Get the appropriate back text
+  const getBackText = () => {
+    if (params.examId) {
+      return 'Back to Exam'
+    }
+    return 'Back to My Questions'
+  }
 
   const [isLoading, setIsLoading] = useState(true)
   const [displayName, setDisplayName] = useState("")
@@ -370,7 +390,12 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
         <div className="border-b bg-white">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-semibold">{questionName}</h1>
+              <div className="flex items-center gap-4">
+                <Button variant="outline">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-xl font-semibold">{questionName}</h1>
+              </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
