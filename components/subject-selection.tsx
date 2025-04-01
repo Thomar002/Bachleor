@@ -37,7 +37,9 @@ export default function SubjectSelection({ isPublic = false }: SubjectSelectionP
     <div className="flex-1 p-8">
       {/* Header with Choose Subjects button */}
       <div className="max-w-6xl mx-auto mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">My Subjects</h1>
+        <h1 className="text-3xl font-bold">
+          {isPublic ? "My Subjects - Public" : "My Subjects"}
+        </h1>
         <Button
           onClick={() => setDialogOpen(true)}
           className="bg-[#2B4270] hover:bg-[#3B5280] text-white"

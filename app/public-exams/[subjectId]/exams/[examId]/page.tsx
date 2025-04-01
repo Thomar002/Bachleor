@@ -1,6 +1,9 @@
 import QuestionDashboard from "@/components/question-dashboard"
 import { supabase } from "@/lib/supabaseClient"
 import { unstable_noStore as noStore } from 'next/cache'
+import { Button } from "@/components/ui/button"
+import { ChevronLeft } from "lucide-react"
+import Link from "next/link"
 
 export default async function PublicExamPage({ params }: { params: { subjectId: string; examId: string } }) {
   noStore()
@@ -15,5 +18,17 @@ export default async function PublicExamPage({ params }: { params: { subjectId: 
     return <div>Exam not found</div>
   }
 
-  return <QuestionDashboard examId={Number(params.examId)} examName={exam.name} isPublic={true} />
+  return (
+    <div className="relative pt-12">
+      <div className="absolute top-0 left-4">
+        <Link href={`/public-exams/${params.subjectId}`}>
+          <Button variant="outline">
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to Subject
+          </Button>
+        </Link>
+      </div>
+      <QuestionDashboard examId={Number(params.examId)} examName={exam.name} isPublic={true} />
+    </div>
+  )
 }

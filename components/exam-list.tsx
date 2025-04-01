@@ -259,7 +259,14 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">{subjectId ? `Exams for ${subjectId}` : "My Exams"}</h1>
+          <h1 className="text-3xl font-bold">
+            {subjectId
+              ? isPublic
+                ? `Public Exams for ${subjectId.toUpperCase()}`
+                : `Exams for ${subjectId.toUpperCase()}`
+              : "My Exams"
+            }
+          </h1>
         </div>
 
         {/* Search Bar and Create Button */}
