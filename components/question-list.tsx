@@ -11,6 +11,7 @@ import { CreateQuestionOverlay } from "./create-question-overlay"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RenameDialog } from "./rename-dialog"
+import { ConfirmDialog } from "./confirm-dialog"
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -43,6 +44,8 @@ export default function QuestionList() {
   const [exams, setExams] = useState<{ id: number; name: string }[]>([])
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
   const [questionToRename, setQuestionToRename] = useState<Question | null>(null)
+  const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
 
   useEffect(() => {
     fetchQuestions()
@@ -153,6 +156,7 @@ export default function QuestionList() {
     } else {
       fetchQuestions()
     }
+    setQuestionToDelete(null)
   }
 
   const handleCopy = async (question: Question) => {
@@ -216,6 +220,7 @@ export default function QuestionList() {
       setSelectedQuestions([])
       fetchQuestions()
     }
+    setShowBulkDeleteConfirm(false)
   }
 
   const handleBulkExport = () => {
@@ -338,10 +343,10 @@ export default function QuestionList() {
           <>
             <Button
               variant="destructive"
-              onClick={handleBulkDelete}
-              className="bg-red-600 hover:bg-red-700"
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              disabled={selectedQuestions.length === 0}
             >
-              Delete Selected ({selectedQuestions.length})
+              Delete Selected
             </Button>
             <Button
               onClick={handleBulkExport}
@@ -484,7 +489,10 @@ export default function QuestionList() {
                         Rename
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleExport(question)}>Export</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDeleteQuestion(question.id)} className="text-red-600">
+                      <DropdownMenuItem
+                        onClick={() => setQuestionToDelete(question)}
+                        className="text-red-600"
+                      >
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -507,6 +515,20 @@ export default function QuestionList() {
         onOpenChange={setIsRenameDialogOpen}
         currentName={questionToRename?.name || ""}
         onRename={handleRename}
+      />
+      <ConfirmDialog
+        open={questionToDelete !== null}
+        onOpenChange={(open) => !open && setQuestionToDelete(null)}
+        onConfirm={() => questionToDelete && handleDeleteQuestion(questionToDelete.id)}
+        title="Delete Question"
+        description="Are you sure you want to delete this question? This action cannot be undone."
+      />
+      <ConfirmDialog
+        open={showBulkDeleteConfirm}
+        onOpenChange={setShowBulkDeleteConfirm}
+        onConfirm={handleBulkDelete}
+        title="Delete Multiple Questions"
+        description={`Are you sure you want to delete ${selectedQuestions.length} selected questions? This action cannot be undone.`}
       />
     </div>
   )

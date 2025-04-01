@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { CreateExamOverlay } from "./create-exam-overlay"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RenameDialog } from "./rename-dialog"
+import { ConfirmDialog } from "./confirm-dialog"
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -35,6 +36,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([])
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
   const [examToRename, setExamToRename] = useState<Exam | null>(null)
+  const [examToDelete, setExamToDelete] = useState<Exam | null>(null)
 
   useEffect(() => {
     fetchExams()
@@ -105,6 +107,7 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
     } else {
       fetchExams()
     }
+    setExamToDelete(null)
   }
 
   async function handleCopy(exam: Exam) {
@@ -318,7 +321,10 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
                           Rename
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleExport(exam.id)}>Export</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(exam.id)} className="text-red-600">
+                        <DropdownMenuItem
+                          onClick={() => setExamToDelete(exam)}
+                          className="text-red-600"
+                        >
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -342,6 +348,13 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
           onOpenChange={setIsRenameDialogOpen}
           currentName={examToRename?.name || ""}
           onRename={handleRename}
+        />
+        <ConfirmDialog
+          open={examToDelete !== null}
+          onOpenChange={(open) => !open && setExamToDelete(null)}
+          onConfirm={() => examToDelete && handleDelete(examToDelete.id)}
+          title="Delete Exam"
+          description="Are you sure you want to delete this exam? This action cannot be undone."
         />
       </div>
     </main>
