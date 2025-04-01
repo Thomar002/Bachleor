@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { SubjectDialog } from "./subject-dialog"
 
-export default function SubjectSelection() {
+interface SubjectSelectionProps {
+  isPublic?: boolean;
+}
+
+export default function SubjectSelection({ isPublic = false }: SubjectSelectionProps) {
   const router = useRouter()
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
   const [favorites, setFavorites] = useState<string[]>([])
@@ -21,7 +25,8 @@ export default function SubjectSelection() {
 
   const handleSubjectClick = (subject: string) => {
     setSelectedSubject(subject)
-    router.push(`/subjects/${subject}`)
+    const basePath = isPublic ? '/public-exams' : '/subjects'
+    router.push(`${basePath}/${subject}`)
   }
 
   const handleFavoritesChange = (newFavorites: string[]) => {

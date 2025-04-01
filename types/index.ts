@@ -6,11 +6,12 @@ export type QuestionType =
   | "Equation";
 
 export interface Exam {
-  id: string
-  name: string
-  description: string
-  subject_id: string
-  created_at: string
+  id: number;
+  name: string;
+  description: string;
+  subject_id: string | null;
+  created_at: string;
+  is_public: boolean;  // Make sure this is defined as a required boolean
 }
 
 export interface Question {

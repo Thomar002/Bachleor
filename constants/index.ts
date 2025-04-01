@@ -9,9 +9,9 @@ export const COLORS = {
 }
 
 export const ROUTES = {
-  home: '/dashboard',
-  exams: '/my-exams',
-  subjects: '/subjects',
-  profile: '/profile',
-  questions: '/my-questions',
+  home: "/frontpage",
+  questions: "/my-questions",
+  exams: "/my-exams",
+  subjects: "/subjects",
+  publicExams: "/public-exams",
 }

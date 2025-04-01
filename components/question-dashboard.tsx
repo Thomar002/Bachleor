@@ -27,7 +27,13 @@ interface Question {
   points: number
 }
 
-export default function QuestionDashboard({ examId, examName }: { examId: number; examName: string }) {
+interface QuestionDashboardProps {
+  examId: number;
+  examName: string;
+  isPublic?: boolean;
+}
+
+export default function QuestionDashboard({ examId, examName, isPublic = false }: QuestionDashboardProps) {
   const params = useParams()
   const [searchQuery, setSearchQuery] = useState("")
   const [questions, setQuestions] = useState<Question[]>([])

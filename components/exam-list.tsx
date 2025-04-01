@@ -21,12 +21,18 @@ interface Exam {
   created_at: string
   description: string
   subject_id: string
+  is_public: boolean
 }
 
 type SortField = 'subject_id' | 'created_at'
 type SortOrder = 'asc' | 'desc'
 
-export default function ExamList({ subjectId = null }: { subjectId?: string | null }) {
+interface ExamListProps {
+  subjectId?: string | null;
+  isPublic?: boolean;
+}
+
+export default function ExamList({ subjectId = null, isPublic = false }: ExamListProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [exams, setExams] = useState<Exam[]>([])
   const [isCreateOverlayOpen, setIsCreateOverlayOpen] = useState(false)
@@ -40,15 +46,18 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
 
   useEffect(() => {
     fetchExams()
-  }, [subjectId]) // Legg til subjectId som dependency
+  }, [subjectId, isPublic]) // Add isPublic as dependency
 
   async function fetchExams() {
     let query = supabase.from("Exams").select("*")
 
     if (subjectId) {
       const normalizedSubjectId = subjectId.toLowerCase()
-      console.log("Fetching exams for subject:", normalizedSubjectId)
       query = query.eq("subject_id", normalizedSubjectId)
+    }
+
+    if (isPublic) {
+      query = query.eq("is_public", true)
     }
 
     const { data, error } = await query.order("created_at", { ascending: false })
@@ -57,7 +66,12 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
       console.error("Error fetching exams:", error)
     } else {
       console.log("Fetched exams:", data)
-      setExams(data || [])
+      // Ensure each exam has the is_public property
+      const examsWithPublicStatus = (data || []).map(exam => ({
+        ...exam,
+        is_public: exam.is_public ?? false // Default to false if undefined
+      })) as Exam[]
+      setExams(examsWithPublicStatus)
     }
   }
 
@@ -148,8 +162,9 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
   }
 
   function handleExamClick(exam: Exam) {
+    const basePath = isPublic ? '/public-exams' : '/subjects'
     if (subjectId) {
-      router.push(`/subjects/${subjectId}/exams/${exam.id}`)
+      router.push(`${basePath}/${subjectId}/exams/${exam.id}`)
     } else {
       router.push(`/my-exams/${exam.id}`)
     }
@@ -220,6 +235,22 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
     } else {
       await fetchExams() // Add await here
       router.refresh() // Add this line to force a refresh
+    }
+  }
+
+  async function handlePublishToggle(exam: Exam) {
+    // Set is_public to true if it's undefined or false, and false if it's true
+    const newPublicStatus = !exam.is_public
+
+    const { error } = await supabase
+      .from("Exams")
+      .update({ is_public: newPublicStatus })
+      .eq("id", exam.id)
+
+    if (error) {
+      console.error("Error updating exam publish status:", error)
+    } else {
+      fetchExams()
     }
   }
 
@@ -321,6 +352,10 @@ export default function ExamList({ subjectId = null }: { subjectId?: string | nu
                           Rename
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleExport(exam.id)}>Export</DropdownMenuItem>
+                        {/* Show Publish/Unpublish in both public and non-public views */}
+                        <DropdownMenuItem onClick={() => handlePublishToggle(exam)}>
+                          {exam.is_public ? "Unpublish" : "Publish"}
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setExamToDelete(exam)}
                           className="text-red-600"
