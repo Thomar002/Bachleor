@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Check, Menu, Bot, Tag, X, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { Check, Menu, Bot, Tag, X, ChevronLeft, ChevronRight, Plus, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
@@ -76,6 +76,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [isAICreatorOpen, setIsAICreatorOpen] = useState(false)
+  const [isStudentView, setIsStudentView] = useState(false)
 
   const editorRef = useRef<HTMLDivElement>(null)
 
@@ -184,6 +185,10 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
       .filter((tag): tag is string => typeof tag === 'string' && tag.length > 0)
 
     setAvailableTags([...new Set(allTags)])
+  }
+
+  const toggleView = () => {
+    setIsStudentView(!isStudentView)
   }
 
   useEffect(() => {
@@ -399,18 +404,39 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => navigateQuestion('prev')}
-                  disabled={currentIndex === 0}
+                  onClick={toggleView}
+                  className="flex items-center gap-2"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  {isStudentView ? (
+                    <>
+                      <EyeOff className="h-4 w-4" />
+                      Teacher View
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-4 w-4" />
+                      Student View
+                    </>
+                  )}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigateQuestion('next')}
-                  disabled={currentIndex === questions.length - 1}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                {!isStudentView && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigateQuestion('prev')}
+                      disabled={currentIndex === 0}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigateQuestion('next')}
+                      disabled={currentIndex === questions.length - 1}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
             <Separator className="my-4" />

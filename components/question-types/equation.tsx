@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Menu, Bot, Plus, Square, Tag, Divide, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Menu, Bot, Plus, Square, Tag, Divide, X, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { SaveQuestionButton } from "../save-question-button"
 import { QuestionTypeDialog } from "../question-type-dialog"
@@ -63,6 +63,11 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [isAICreatorOpen, setIsAICreatorOpen] = useState(false)
+  const [isStudentView, setIsStudentView] = useState(false)
+
+  const toggleView = () => {
+    setIsStudentView(!isStudentView)
+  }
 
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -471,18 +476,39 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => navigateQuestion('prev')}
-                disabled={currentIndex === 0}
+                onClick={toggleView}
+                className="flex items-center gap-2"
               >
-                <ChevronLeft className="h-4 w-4" />
+                {isStudentView ? (
+                  <>
+                    <EyeOff className="h-4 w-4" />
+                    Teacher View
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    Student View
+                  </>
+                )}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigateQuestion('next')}
-                disabled={currentIndex === questions.length - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              {!isStudentView && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigateQuestion('prev')}
+                    disabled={currentIndex === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigateQuestion('next')}
+                    disabled={currentIndex === questions.length - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           <Separator className="my-4" />

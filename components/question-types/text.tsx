@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Menu, Bot, Tag, X, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { Menu, Bot, Tag, X, ChevronLeft, ChevronRight, Plus, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
@@ -53,11 +53,20 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const router = useRouter()
   const [isAICreatorOpen, setIsAICreatorOpen] = useState(false)
+  const [isStudentView, setIsStudentView] = useState(false)
+  const [answerContent, setAnswerContent] = useState<string>("")
+  const studentAnswerEditorRef = useRef<HTMLDivElement>(null)
 
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
     const content = e.currentTarget.innerHTML;
     setQuestionContent(content);
   };
+
+  const handleStudentAnswerChange = () => {
+    if (studentAnswerEditorRef.current) {
+      setAnswerContent(studentAnswerEditorRef.current.innerHTML)
+    }
+  }
 
   useEffect(() => {
     if (answerEditorRef.current && questionContent) {
@@ -266,23 +275,26 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     fetchCurrentPoints()
   }, [questionId])
 
-  const handleSaveQuestion = async () => {
+  const handleSave = async () => {
     if (!questionId) return
 
-    const updates = {
-      display_name: displayName,
-      answer: answerEditorRef.current?.innerHTML || "",
-      type: ["text"],
-      tags: tags
-    }
+    try {
+      const { error } = await supabase
+        .from("Questions")
+        .update({
+          display_name: displayName,
+          question: questionContent,
+          type: "text",
+          attachments: attachments,
+          points: currentPoints
+        })
+        .eq("id", questionId)
 
-    const { error } = await supabase
-      .from("Questions")
-      .update(updates)
-      .eq("id", questionId)
-
-    if (error) {
+      if (error) throw error
+      toast.success("Question saved successfully")
+    } catch (error) {
       console.error("Error saving question:", error)
+      toast.error("Failed to save question")
     }
   }
 
@@ -349,111 +361,142 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     fetchQuestions()
   }, [questionId, params])
 
+  const toggleView = () => {
+    setIsStudentView(!isStudentView)
+  }
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">  {/* Increased gap from 2 to 4 */}
-              <Button variant="outline">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <h1 className="text-xl font-semibold">{questionName}</h1>
-            </div>
+            {isStudentView ? (
+              <div className="flex-1 text-center">
+                <h1 className="text-xl font-semibold">
+                  {displayName}
+                </h1>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-4">
+                  <Button variant="outline">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <h1 className="text-xl font-semibold">
+                    {questionName}
+                  </h1>
+                </div>
+              </>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => navigateQuestion('prev')}
-                disabled={currentIndex === 0}
+                onClick={toggleView}
+                className="flex items-center gap-2"
               >
-                <ChevronLeft className="h-4 w-4" />
+                {isStudentView ? (
+                  <>
+                    <EyeOff className="h-4 w-4" />
+                    Teacher View
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    Student View
+                  </>
+                )}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigateQuestion('next')}
-                disabled={currentIndex === questions.length - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              {!isStudentView && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigateQuestion('prev')}
+                    disabled={currentIndex === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigateQuestion('next')}
+                    disabled={currentIndex === questions.length - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           <Separator className="my-4" />
-          <div className="flex justify-between items-start">
-            <div className="flex gap-4">
-              <div className="flex flex-col items-center">
-                <Button
-                  onClick={() => setIsTypeDialogOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Menu className="h-5 w-5" />
-                  Question Type
-                </Button>
-                <span className="text-sm text-gray-600 mt-1">Text Answer</span>
-              </div>
-              <Button
-                onClick={() => setIsTagDialogOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Tag className="h-5 w-5" />
-                Tags ({tags.length})
-              </Button>
-              <div className="flex flex-col items-center">
-                <Button
-                  className="flex items-center gap-2"
-                  onClick={() => setIsAICreatorOpen(true)}
-                >
-                  <Bot className="h-5 w-5" />
-                  AI creator
-                </Button>
-                <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
-              </div>
-            </div>
-            <div className="flex flex-col items-center">
-              <Button
-                className="bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white flex items-center gap-2"
-                onClick={() => {
-                  router.push('/questions/create')
-                }}
-              >
-                <Plus className="h-5 w-5" />
-                Create Question
-              </Button>
-              <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
-            </div>
-          </div>
-          {/* Display current tags */}
-          <div className="mt-2 space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                  {tag}
-                </div>
-              ))}
-            </div>
 
-            {/* Add new tag */}
-            <div className="flex gap-2 w-[200px]">
-              <Input
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Add new tag..."
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                className="flex-1"
-              />
-              <Button onClick={handleAddTag}>Add</Button>
-            </div>
-          </div>
-        </div>
-        {/* Display name section */}
-        <div className="px-4 pb-4">
-          <div className="max-w-md mx-auto">
-            <h2 className="text-sm font-medium text-gray-700 mb-2">Display name</h2>
-            <Input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Enter display name..."
-            />
-          </div>
+          {!isStudentView && (
+            <>
+              <div className="flex justify-between items-start">
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <Button
+                      onClick={() => setIsTypeDialogOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Menu className="h-5 w-5" />
+                      Question Type
+                    </Button>
+                    <span className="text-sm text-gray-600 mt-1">Text Answer</span>
+                  </div>
+                  <Button
+                    onClick={() => setIsTagDialogOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Tag className="h-5 w-5" />
+                    Tags ({tags.length})
+                  </Button>
+                  <div className="flex flex-col items-center">
+                    <Button
+                      className="flex items-center gap-2"
+                      onClick={() => setIsAICreatorOpen(true)}
+                    >
+                      <Bot className="h-5 w-5" />
+                      AI creator
+                    </Button>
+                    <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <Button
+                    className="bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white flex items-center gap-2"
+                    onClick={() => {
+                      router.push('/questions/create')
+                    }}
+                  >
+                    <Plus className="h-5 w-5" />
+                    Create Question
+                  </Button>
+                  <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
+                </div>
+              </div>
+              {/* Display current tags */}
+              <div className="mt-2 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                      {tag}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add new tag */}
+                <div className="flex gap-2 w-[200px]">
+                  <Input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Add new tag..."
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleAddTag}>Add</Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
         <EditorToolbar
           onBold={handleBold}
@@ -465,6 +508,7 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
           onImageUpload={() => handleFileUpload('image')}
           onVideoUpload={() => handleFileUpload('video')}
           onFileUpload={() => handleFileUpload('file')}
+          isStudentView={isStudentView}
         />
       </div>
 
@@ -474,58 +518,72 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
             <h2 className="text-sm font-medium text-gray-700 mb-2">Question</h2>
             <div
               ref={answerEditorRef}
-              contentEditable
+              contentEditable={!isStudentView}
               data-placeholder="Enter your question here..."
-              className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-4"
+              className={`min-h-[100px] p-4 border rounded-md bg-white ${!isStudentView ? 'focus:outline-none focus:ring-2 focus:ring-blue-500' : ''
+                } empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-4`}
               style={{ lineHeight: '1.5' }}
-              onInput={handleEditorChange}
+              onInput={!isStudentView ? handleEditorChange : undefined}
             />
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Points
-              </label>
-              <Input
-                type="number"
-                value={currentPoints || ''}
-                onChange={(e) => {
-                  const value = e.target.value === '' ? 0 : parseInt(e.target.value)
-                  setCurrentPoints(value)
-                  setPoints(value)
-                }}
-                className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-            <div className="mt-4 flex justify-end">
-              <SaveQuestionButton
-                displayName={displayName}
-                question={questionContent}
-                type="text"
-                onSave={async () => {
-                  if (!questionId) return
 
-                  try {
-                    const { error } = await supabase
-                      .from("Questions")
-                      .update({
-                        display_name: displayName,
-                        question: questionContent,
-                        type: "text",
-                        tags: tags,
-                        attachments: attachments,
-                        points: points
-                      })
-                      .eq("id", questionId)
+            {isStudentView && (
+              <>
+                <h2 className="text-sm font-medium text-gray-700 mb-2 mt-6">Your Answer</h2>
+                <div
+                  ref={studentAnswerEditorRef}
+                  contentEditable
+                  data-placeholder="Write your answer here..."
+                  className="min-h-[100px] p-4 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 mb-4"
+                  style={{ lineHeight: '1.5' }}
+                  onInput={handleStudentAnswerChange}
+                />
+              </>
+            )}
 
-                    if (error) throw error
+            {!isStudentView && (
+              <>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Points
+                  </label>
+                  <Input
+                    type="number"
+                    value={currentPoints || ''}
+                    onChange={(e) => setCurrentPoints(Number(e.target.value))}
+                    className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <SaveQuestionButton
+                    displayName={displayName}
+                    question={questionContent}
+                    type="text"
+                    onSave={handleSave}
+                  />
+                </div>
+              </>
+            )}
 
-                    toast.success("Question saved successfully")
-                  } catch (error) {
-                    console.error("Error saving question:", error)
-                    toast.error("Failed to save question")
-                  }
-                }}
-              />
-            </div>
+            {isStudentView && (
+              <div className="mt-4 flex justify-end gap-2">
+                <Button
+                  className="flex items-center gap-2"
+                  onClick={() => navigateQuestion('prev')}
+                  disabled={currentIndex === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous Question
+                </Button>
+                <Button
+                  className="flex items-center gap-2"
+                  onClick={() => navigateQuestion('next')}
+                  disabled={currentIndex === questions.length - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  Next Question
+                </Button>
+              </div>
+            )}
           </div>
 
           {attachments.length > 0 && (

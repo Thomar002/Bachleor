@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
 
 interface EditorToolbarProps {
   onBold: () => void;
@@ -26,6 +27,7 @@ interface EditorToolbarProps {
   onImageUpload: () => void;
   onVideoUpload: () => void;
   onFileUpload: () => void;
+  isStudentView?: boolean; // Add this prop
 }
 
 export function EditorToolbar({
@@ -37,7 +39,8 @@ export function EditorToolbar({
   onSizeChange,
   onImageUpload,
   onVideoUpload,
-  onFileUpload
+  onFileUpload,
+  isStudentView
 }: EditorToolbarProps) {
   return (
     <div className="border-b border-gray-200 bg-white p-2 flex items-center gap-2">
@@ -52,22 +55,9 @@ export function EditorToolbar({
         </SelectContent>
       </Select>
 
-      <Select defaultValue="3" onValueChange={onSizeChange}>
-        <SelectTrigger className="w-[70px]">
-          <SelectValue placeholder="Size" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="1">Small</SelectItem>
-          <SelectItem value="2">Medium</SelectItem>
-          <SelectItem value="3">Normal</SelectItem>
-          <SelectItem value="4">Large</SelectItem>
-          <SelectItem value="5">X-Large</SelectItem>
-          <SelectItem value="6">XX-Large</SelectItem>
-          <SelectItem value="7">XXX-Large</SelectItem>
-        </SelectContent>
-      </Select>
+      <Separator orientation="vertical" className="h-8" />
 
-      <div className="flex items-center gap-1 border-l border-r px-2">
+      <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBold}>
           <Bold className="h-4 w-4" />
         </Button>
@@ -79,7 +69,9 @@ export function EditorToolbar({
         </Button>
       </div>
 
-      <div className="flex items-center gap-1 border-r px-2">
+      <Separator orientation="vertical" className="h-8" />
+
+      <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onAlign('left')}>
           <AlignLeft className="h-4 w-4" />
         </Button>
@@ -94,17 +86,22 @@ export function EditorToolbar({
         </Button>
       </div>
 
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onImageUpload}>
-          <ImageIcon className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onVideoUpload}>
-          <Video className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onFileUpload}>
-          <FileText className="h-4 w-4" />
-        </Button>
-      </div>
+      {!isStudentView && (
+        <>
+          <Separator orientation="vertical" className="h-8" />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onImageUpload}>
+              <ImageIcon className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onVideoUpload}>
+              <Video className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onFileUpload}>
+              <FileText className="h-4 w-4" />
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Check, Trash2, Menu, Bot, Tag, X, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { Check, Trash2, Menu, Bot, Tag, X, ChevronLeft, ChevronRight, Plus, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorToolbar } from "../editor-toolbar"
@@ -64,6 +64,11 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const router = useRouter()
   const [isAICreatorOpen, setIsAICreatorOpen] = useState(false)
+  const [isStudentView, setIsStudentView] = useState(false)
+
+  const toggleView = () => {
+    setIsStudentView(!isStudentView)
+  }
 
   const handleSave = async () => {
     if (!questionId) return
@@ -443,6 +448,23 @@ export function MultipleChoiceMultiple({ questionName, initialTags = [], onTagsC
               <h1 className="text-xl font-semibold">{questionName}</h1>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={toggleView}
+                className="flex items-center gap-2"
+              >
+                {isStudentView ? (
+                  <>
+                    <EyeOff className="h-4 w-4" />
+                    Teacher View
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    Student View
+                  </>
+                )}
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => navigateQuestion('prev')}
