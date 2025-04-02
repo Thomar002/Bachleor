@@ -56,6 +56,8 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
   const [isStudentView, setIsStudentView] = useState(false)
   const [answerContent, setAnswerContent] = useState<string>("")
   const studentAnswerEditorRef = useRef<HTMLDivElement>(null)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState(questionName)
 
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
     const content = e.currentTarget.innerHTML;
@@ -365,10 +367,29 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
     setIsStudentView(!isStudentView)
   }
 
+  const handleNameUpdate = async () => {
+    if (!questionId || editedName.trim() === '') return
+
+    try {
+      const { error } = await supabase
+        .from("Questions")
+        .update({ name: editedName.trim() })
+        .eq("id", questionId)
+
+      if (error) throw error
+      setIsEditingName(false)
+      toast.success("Question name updated successfully")
+    } catch (error) {
+      console.error("Error updating question name:", error)
+      toast.error("Failed to update question name")
+    }
+  }
+
   return (
     <div className="bg-gray-50">
       <div className="border-b bg-white">
         <div className="p-4">
+          {/* Top section with name and navigation */}
           <div className="flex items-center justify-between mb-4">
             {isStudentView ? (
               <div className="flex-1 text-center">
@@ -382,9 +403,34 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
                   <Button variant="outline">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <h1 className="text-xl font-semibold">
-                    {questionName}
-                  </h1>
+                  {isEditingName ? (
+                    <Input
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      onBlur={handleNameUpdate}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleNameUpdate()
+                        } else if (e.key === 'Escape') {
+                          setEditedName(questionName)
+                          setIsEditingName(false)
+                        }
+                      }}
+                      className="text-xl font-semibold w-auto"
+                      autoFocus
+                    />
+                  ) : (
+                    <h1
+                      className="text-xl font-semibold cursor-pointer"
+                      onDoubleClick={() => {
+                        setEditedName(questionName)
+                        setIsEditingName(true)
+                      }}
+                    >
+                      {questionName}
+                    </h1>
+                  )}
                 </div>
               </>
             )}
@@ -426,11 +472,13 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
               )}
             </div>
           </div>
-          <Separator className="my-4" />
 
           {!isStudentView && (
             <>
-              <div className="flex justify-between items-start">
+              <Separator className="my-4" />
+
+              {/* Buttons section */}
+              <div className="flex justify-between items-start mb-4">
                 <div className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <Button
@@ -473,8 +521,9 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
                   <span className="text-sm text-gray-600 mt-1">&nbsp;</span>
                 </div>
               </div>
-              {/* Display current tags */}
-              <div className="mt-2 space-y-4">
+
+              {/* Tags section */}
+              <div className="space-y-4 mb-4">
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
                     <div key={tag} className="bg-gray-100 px-2 py-1 rounded text-sm">
@@ -483,7 +532,6 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
                   ))}
                 </div>
 
-                {/* Add new tag */}
                 <div className="flex gap-2 w-[200px]">
                   <Input
                     value={newTag}
@@ -493,6 +541,19 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
                     className="flex-1"
                   />
                   <Button onClick={handleAddTag}>Add</Button>
+                </div>
+              </div>
+
+              {/* Display name input centered above toolbar */}
+              <div className="px-4 pb-4">
+                <div className="max-w-md mx-auto">
+                  <h2 className="text-sm font-medium text-gray-700 mb-2">Display name</h2>
+                  <Input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Enter display name..."
+                    className="max-w-md mx-auto"
+                  />
                 </div>
               </div>
             </>
