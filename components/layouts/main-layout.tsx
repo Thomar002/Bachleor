@@ -26,9 +26,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   const navigationItems = [
-    { href: ROUTES.home, label: "Front Page", icon: Home },
-    { href: ROUTES.questions, label: "My Questions", icon: HelpCircle },
     { href: ROUTES.exams, label: "My Exams", icon: BookOpen },
+    { href: ROUTES.questions, label: "My Questions", icon: HelpCircle },
     { href: ROUTES.subjects, label: "Subjects", icon: GraduationCap },
     { href: ROUTES.publicExams, label: "Public Exams", icon: Globe },
   ]

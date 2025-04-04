@@ -348,7 +348,7 @@ export default function QuestionList() {
               onClick={() => setShowBulkDeleteConfirm(true)}
               disabled={selectedQuestions.length === 0}
             >
-              Delete Selected
+              Delete Selected ({selectedQuestions.length})
             </Button>
             <Button
               onClick={handleBulkExport}
