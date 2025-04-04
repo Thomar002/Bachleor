@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, BookOpen, GraduationCap, User, HelpCircle, Globe, Languages } from "lucide-react"
+import { Home, BookOpen, GraduationCap, User, HelpCircle, Globe, Languages, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -30,6 +30,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { href: ROUTES.questions, label: "My Questions", icon: HelpCircle },
     { href: ROUTES.subjects, label: "Subjects", icon: GraduationCap },
     { href: ROUTES.publicExams, label: "Public Exams", icon: Globe },
+    { href: "/deleted-exams", label: "Deleted Exams", icon: Trash2 },
   ]
 
   return (
