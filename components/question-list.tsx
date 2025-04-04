@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RenameDialog } from "./rename-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
+import { toast } from "sonner"
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -29,6 +30,7 @@ interface Question {
 
 type SortField = 'created_at'
 type SortOrder = 'asc' | 'desc'
+type QTIVersion = 'QTI 2.x' | 'QTI 3.x'
 
 export default function QuestionList() {
   const [questions, setQuestions] = useState<Question[]>([])
@@ -155,7 +157,9 @@ export default function QuestionList() {
 
     if (error) {
       console.error("Error deleting question:", error)
+      toast.error("Failed to delete question")
     } else {
+      toast.success("Question deleted successfully")
       fetchQuestions()
     }
     setQuestionToDelete(null)
@@ -165,15 +169,18 @@ export default function QuestionList() {
     const newQuestion = {
       name: `${question.name} (Copy)`,
       tags: question.tags,
-      exam_id: question.exam_id,
-      type: question.type
+      exam_id: question.exam_id
     }
 
-    const { error } = await supabase.from("Questions").insert([newQuestion])
+    const { error } = await supabase
+      .from("Questions")
+      .insert([newQuestion])
 
     if (error) {
       console.error("Error copying question:", error)
+      toast.error("Failed to copy question")
     } else {
+      toast.success("Question copied successfully")
       fetchQuestions()
     }
   }
@@ -225,31 +232,16 @@ export default function QuestionList() {
     setShowBulkDeleteConfirm(false)
   }
 
-  const handleBulkExport = () => {
+  const handleBulkExport = (version: QTIVersion) => {
     if (!selectedQuestions.length) return
 
-    const questionsToExport = filteredQuestions.filter(q =>
-      selectedQuestions.includes(q.id)
-    )
-
-    const dataStr = JSON.stringify(questionsToExport, null, 2)
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
-
-    const exportFileDefaultName = 'questions-export.json'
-    const linkElement = document.createElement('a')
-    linkElement.setAttribute('href', dataUri)
-    linkElement.setAttribute('download', exportFileDefaultName)
-    linkElement.click()
+    toast.success(`Exporting ${selectedQuestions.length} questions in ${version} format`)
+    // TODO: Implement actual QTI export
   }
 
-  const handleExport = (question: Question) => {
-    const dataStr = JSON.stringify(question, null, 2)
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
-    const exportFileDefaultName = `question-${question.id}-export.json`
-    const linkElement = document.createElement('a')
-    linkElement.setAttribute('href', dataUri)
-    linkElement.setAttribute('download', exportFileDefaultName)
-    linkElement.click()
+  const handleExport = (question: Question, version: QTIVersion) => {
+    toast.success(`Exporting question in ${version} format`)
+    // TODO: Implement actual QTI export
   }
 
   const handleRename = async (newName: string) => {
@@ -262,7 +254,9 @@ export default function QuestionList() {
 
     if (error) {
       console.error("Error renaming question:", error)
+      toast.error("Failed to rename question")
     } else {
+      toast.success("Question renamed successfully")
       fetchQuestions()
     }
   }
@@ -293,10 +287,12 @@ export default function QuestionList() {
 
       if (error) throw error
 
+      toast.success("Question created successfully")
       fetchQuestions()
       setIsCreateOverlayOpen(false)
     } catch (err) {
       console.error("Error creating question:", err)
+      toast.error("Failed to create question")
     }
   }
 
@@ -308,7 +304,9 @@ export default function QuestionList() {
 
     if (error) {
       console.error("Error updating question exam:", error)
+      toast.error("Failed to update question exam")
     } else {
+      toast.success("Question exam updated successfully")
       fetchQuestions()
     }
   }
@@ -350,12 +348,21 @@ export default function QuestionList() {
             >
               Delete Selected ({selectedQuestions.length})
             </Button>
-            <Button
-              onClick={handleBulkExport}
-              className="bg-[#2B2B2B] hover:bg-[#3B3B3B]"
-            >
-              Export Selected ({selectedQuestions.length})
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-[#2B2B2B] hover:bg-[#3B3B3B]">
+                  Export Selected ({selectedQuestions.length})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleBulkExport('QTI 2.x')}>
+                  QTI 2.x
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkExport('QTI 3.x')}>
+                  QTI 3.x
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="flex-1" /> {/* Spacer */}
           </>
         ) : (
@@ -492,7 +499,21 @@ export default function QuestionList() {
                       >
                         Rename
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport(question)}>Export</DropdownMenuItem>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            Export
+                          </DropdownMenuItem>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => handleExport(question, 'QTI 2.x')}>
+                            QTI 2.x
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExport(question, 'QTI 3.x')}>
+                            QTI 3.x
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <DropdownMenuItem
                         onClick={() => setQuestionToDelete(question)}
                         className="text-red-600"

@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabaseClient"
 interface CreateExamOverlayProps {
   isOpen: boolean
   onClose: () => void
-  onCreateExam: (name: string, description: string, subjectId: string | null) => void
+  onCreateExam: (name: string, description: string | null, subjectId: string | null) => void
   subjectId?: string | null
 }
 
@@ -77,7 +77,9 @@ export function CreateExamOverlay({ isOpen, onClose, onCreateExam, subjectId = n
     e.preventDefault()
     // Only use selectedSubject if one is selected
     const finalSubjectId = selectedSubject ? selectedSubject.toLowerCase() : null
-    onCreateExam(name, description, finalSubjectId)
+    // Pass null if description is empty
+    const finalDescription = description.trim() || null
+    onCreateExam(name, finalDescription, finalSubjectId)
     setName("")
     setDescription("")
     setSelectedSubject("")
@@ -96,8 +98,13 @@ export function CreateExamOverlay({ isOpen, onClose, onCreateExam, subjectId = n
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} required />
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter description"
+            />
           </div>
           {!subjectId && (
             <div className="space-y-2">

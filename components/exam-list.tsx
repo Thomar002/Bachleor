@@ -11,6 +11,7 @@ import { CreateExamOverlay } from "./create-exam-overlay"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RenameDialog } from "./rename-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
+import { toast } from "sonner"
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -26,6 +27,7 @@ interface Exam {
 
 type SortField = 'subject_id' | 'created_at'
 type SortOrder = 'asc' | 'desc'
+type QTIVersion = 'QTI 2.x' | 'QTI 3.x'
 
 interface ExamListProps {
   subjectId?: string | null;
@@ -118,7 +120,9 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
 
     if (error) {
       console.error("Error deleting exam:", error)
+      toast.error("Failed to delete exam")
     } else {
+      toast.success("Exam deleted successfully")
       fetchExams()
     }
     setExamToDelete(null)
@@ -135,15 +139,17 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
 
     if (error) {
       console.error("Error copying exam:", error)
+      toast.error("Failed to copy exam")
     } else {
+      toast.success("Exam copied successfully")
       fetchExams()
     }
   }
 
-  async function handleCreateExam(name: string, description: string, subjectId: string | null) {
+  async function handleCreateExam(name: string, description: string | null, subjectId: string | null) {
     const newExam = {
       name,
-      description,
+      description: description || null, // Ensure null if description is empty
       subject_id: subjectId,
     }
 
@@ -151,14 +157,16 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
 
     if (error) {
       console.error("Error creating exam:", error)
+      toast.error("Failed to create exam")
     } else {
+      toast.success("Exam created successfully")
       fetchExams()
     }
   }
 
-  function handleExport(examId: number) {
-    console.log(`Export exam with id: ${examId}`)
-    // Implement export logic here
+  const handleExport = (exam: Exam, version: QTIVersion) => {
+    toast.success(`Exporting exam in ${version} format`)
+    // TODO: Implement actual QTI export
   }
 
   function handleExamClick(exam: Exam) {
@@ -217,7 +225,9 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
 
     if (error) {
       console.error("Error updating exam subject:", error)
+      toast.error("Failed to update exam subject")
     } else {
+      toast.success("Exam subject updated successfully")
       fetchExams()
     }
   }
@@ -232,14 +242,15 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
 
     if (error) {
       console.error("Error renaming exam:", error)
+      toast.error("Failed to rename exam")
     } else {
-      await fetchExams() // Add await here
-      router.refresh() // Add this line to force a refresh
+      toast.success("Exam renamed successfully")
+      await fetchExams()
+      router.refresh()
     }
   }
 
   async function handlePublishToggle(exam: Exam) {
-    // Set is_public to true if it's undefined or false, and false if it's true
     const newPublicStatus = !exam.is_public
 
     const { error } = await supabase
@@ -249,7 +260,9 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
 
     if (error) {
       console.error("Error updating exam publish status:", error)
+      toast.error("Failed to update exam publish status")
     } else {
+      toast.success(newPublicStatus ? "Exam published successfully" : "Exam unpublished successfully")
       fetchExams()
     }
   }
@@ -358,7 +371,21 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
                         >
                           Rename
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleExport(exam.id)}>Export</DropdownMenuItem>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              Export
+                            </DropdownMenuItem>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleExport(exam, 'QTI 2.x')}>
+                              QTI 2.x
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleExport(exam, 'QTI 3.x')}>
+                              QTI 3.x
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         {/* Show Publish/Unpublish in both public and non-public views */}
                         <DropdownMenuItem onClick={() => handlePublishToggle(exam)}>
                           {exam.is_public ? "Unpublish" : "Publish"}

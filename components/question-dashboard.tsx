@@ -13,6 +13,7 @@ import { CreateQuestionOverlay } from "./create-question-overlay"
 import { useParams } from "next/navigation"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RenameDialog } from "./rename-dialog"
+import { toast } from "sonner"
 
 type SortField = 'created_at'
 type SortOrder = 'asc' | 'desc'
@@ -158,7 +159,9 @@ export default function QuestionDashboard({ examId, examName, isPublic = false }
 
     if (error) {
       console.error("Error deleting question:", error)
+      toast.error("Failed to delete question")
     } else {
+      toast.success("Question deleted successfully")
       fetchQuestions()
     }
   }
@@ -174,7 +177,9 @@ export default function QuestionDashboard({ examId, examName, isPublic = false }
 
     if (error) {
       console.error("Error copying question:", error)
+      toast.error("Failed to copy question")
     } else {
+      toast.success("Question copied successfully")
       fetchQuestions()
     }
   }
@@ -183,14 +188,16 @@ export default function QuestionDashboard({ examId, examName, isPublic = false }
     const newQuestion = {
       name,
       tags,
-      exam_id: examId, // This now uses the examId prop directly
+      exam_id: examId,
     }
 
     const { data, error } = await supabase.from("Questions").insert([newQuestion]).select()
 
     if (error) {
       console.error("Error creating question:", error)
+      toast.error("Failed to create question")
     } else {
+      toast.success("Question created successfully")
       // Process the new question data to ensure tags is handled correctly
       const processedNewQuestion = {
         ...data[0],
@@ -278,7 +285,9 @@ export default function QuestionDashboard({ examId, examName, isPublic = false }
 
     if (error) {
       console.error("Error renaming question:", error)
+      toast.error("Failed to rename question")
     } else {
+      toast.success("Question renamed successfully")
       fetchQuestions()
     }
   }
