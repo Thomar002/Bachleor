@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,7 @@ import { useParams } from "next/navigation"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RenameDialog } from "./rename-dialog"
 import { toast } from "sonner"
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card"
 
 type SortField = 'created_at'
 type SortOrder = 'asc' | 'desc'
@@ -35,6 +37,7 @@ interface QuestionDashboardProps {
 }
 
 export default function QuestionDashboard({ examId, examName, isPublic = false }: QuestionDashboardProps) {
+  const router = useRouter()
   const params = useParams()
   const [searchQuery, setSearchQuery] = useState("")
   const [questions, setQuestions] = useState<Question[]>([])
@@ -401,12 +404,53 @@ export default function QuestionDashboard({ examId, examName, isPublic = false }
                         onCheckedChange={() => handleSelectQuestion(question.id)}
                       />
                     </div>
-                    <Link
-                      href={getQuestionUrl(question.id, Array.isArray(question.type) ? question.type : [question.type])}
-                      className="hover:underline"
-                    >
-                      {question.name}
-                    </Link>
+                    <HoverCard openDelay={400} closeDelay={0}>
+                      <HoverCardTrigger asChild>
+                        <button
+                          onClick={() => router.push(getQuestionUrl(question.id, Array.isArray(question.type) ? question.type : [question.type]))}
+                          className="text-left hover:underline"
+                        >
+                          {question.name}
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        className="w-64 bg-[#2B2B2B] text-white p-3 rounded-lg shadow-lg pointer-events-none"
+                        sideOffset={2}
+                        align="start"
+                        alignOffset={40}
+                      >
+                        <div className="space-y-1.5">
+                          <h4 className="font-semibold text-sm">{question.name}</h4>
+                          <div className="text-xs space-y-1">
+                            <div className="flex justify-between">
+                              <span>Date changed:</span>
+                              <span>
+                                {new Date(question.created_at).toLocaleString("no-NO", {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Type:</span>
+                              <span>{Array.isArray(question.type) ? question.type.join(", ") : question.type}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Points:</span>
+                              <span>{question.points || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Tags:</span>
+                              <span>{question.tags.join(", ")}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
                     <div>
                       {Array.isArray(question.type)
                         ? question.type.join(", ")

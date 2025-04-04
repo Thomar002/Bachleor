@@ -13,6 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RenameDialog } from "./rename-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
 import { toast } from "sonner"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
+import { formatDistanceToNow } from 'date-fns'
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -452,12 +458,67 @@ export default function QuestionList() {
                     onCheckedChange={() => handleSelectQuestion(question.id)}
                   />
                 </div>
-                <button
-                  onClick={() => handleQuestionClick(question.id, question.exam_id, question.type)}
-                  className="text-left hover:underline"
-                >
-                  {question.name}
-                </button>
+                <HoverCard openDelay={800} closeDelay={0}>
+                  <HoverCardTrigger asChild>
+                    <button
+                      onClick={() => handleQuestionClick(question.id, question.exam_id, question.type)}
+                      className="text-left hover:underline"
+                    >
+                      {question.name}
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent
+                    className="w-64 bg-[#2B2B2B] text-white p-3 rounded-lg shadow-lg pointer-events-none"
+                    sideOffset={2}
+                    align="start"
+                    alignOffset={40}
+                  >
+                    <div className="space-y-1.5">
+                      <h4 className="font-semibold text-sm">{question.name}</h4>
+                      <div className="text-xs space-y-1">
+                        <div className="flex justify-between">
+                          <span>Date changed:</span>
+                          <span>
+                            {new Date(question.created_at).toLocaleString("no-NO", {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: false
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Type:</span>
+                          <span>{question.type.join(", ")}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Points:</span>
+                          <span>{question.points || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Exam:</span>
+                          <span>{exams.find(e => e.id === question.exam_id)?.name || 'None'}</span>
+                        </div>
+                        {question.tags.length > 0 && (
+                          <div className="mt-1.5 pt-1.5 border-t border-gray-600">
+                            <div className="flex flex-wrap gap-1">
+                              {question.tags.map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="px-1.5 py-0.5 bg-[#3B3B3B] rounded-full text-xs"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
                 <div>{question.type.join(", ")}</div>
                 <div>{question.tags.join(", ")}</div>
                 <div>{question.points || 0}</div>

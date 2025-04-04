@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, MoreVertical, ArrowUpDown, ChevronDown } from "lucide-react"
+import { Search, Plus, MoreVertical, ArrowUpDown, ChevronDown, Globe, Lock } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
@@ -12,6 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RenameDialog } from "./rename-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
 import { toast } from "sonner"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card"
+import { formatDistanceToNow } from 'date-fns'
 
 const selectTriggerStyles = "w-32 h-full bg-transparent border-0 hover:bg-transparent focus:ring-0 shadow-none p-0 font-inherit text-inherit text-base" // changed w-full to w-32
 const selectContentStyles = "bg-[#8791A7] border-[#8791A7] text-base w-32" // added w-32
@@ -45,12 +51,9 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
   const [examToRename, setExamToRename] = useState<Exam | null>(null)
   const [examToDelete, setExamToDelete] = useState<Exam | null>(null)
+  const [examStats, setExamStats] = useState<Record<number, { questionCount: number }>>({})
 
-  useEffect(() => {
-    fetchExams()
-  }, [subjectId, isPublic]) // Add isPublic as dependency
-
-  async function fetchExams() {
+  const fetchExams = async () => {
     let query = supabase.from("Exams").select("*")
 
     if (subjectId) {
@@ -66,16 +69,35 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
 
     if (error) {
       console.error("Error fetching exams:", error)
+      toast.error("Failed to fetch exams")
     } else {
-      console.log("Fetched exams:", data)
-      // Ensure each exam has the is_public property
       const examsWithPublicStatus = (data || []).map(exam => ({
         ...exam,
-        is_public: exam.is_public ?? false // Default to false if undefined
+        is_public: exam.is_public ?? false
       })) as Exam[]
       setExams(examsWithPublicStatus)
+      fetchExamStats(examsWithPublicStatus)
     }
   }
+
+  const fetchExamStats = async (exams: Exam[]) => {
+    const stats: Record<number, { questionCount: number }> = {}
+
+    for (const exam of exams) {
+      const { count } = await supabase
+        .from("Questions")
+        .select("*", { count: 'exact' })
+        .eq("exam_id", exam.id)
+
+      stats[exam.id] = { questionCount: count || 0 }
+    }
+
+    setExamStats(stats)
+  }
+
+  useEffect(() => {
+    fetchExams()
+  }, [subjectId, isPublic])
 
   const filteredExams = exams.filter(
     (exam) =>
@@ -146,10 +168,10 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
     }
   }
 
-  async function handleCreateExam(name: string, description: string | null, subjectId: string | null) {
+  const handleCreateExam = async (name: string, description: string | null, subjectId: string | null) => {
     const newExam = {
       name,
-      description: description || null, // Ensure null if description is empty
+      description: description || null,
       subject_id: subjectId,
     }
 
@@ -160,7 +182,7 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
       toast.error("Failed to create exam")
     } else {
       toast.success("Exam created successfully")
-      fetchExams()
+      fetchExams() // Use the fetchExams function here
     }
   }
 
@@ -250,20 +272,19 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
     }
   }
 
-  async function handlePublishToggle(exam: Exam) {
+  const handlePublishToggle = async (exam: Exam) => {
     const newPublicStatus = !exam.is_public
-
     const { error } = await supabase
       .from("Exams")
       .update({ is_public: newPublicStatus })
       .eq("id", exam.id)
 
     if (error) {
-      console.error("Error updating exam publish status:", error)
-      toast.error("Failed to update exam publish status")
+      console.error("Error updating exam public status:", error)
+      toast.error("Failed to update exam status")
     } else {
       toast.success(newPublicStatus ? "Exam published successfully" : "Exam unpublished successfully")
-      fetchExams()
+      fetchExams() // Use the fetchExams function here
     }
   }
 
@@ -307,7 +328,8 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
         {/* Exam Table */}
         <div className="bg-[#B8C2D1] rounded-lg overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-[1fr_1fr_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+          <div className="grid grid-cols-[24px_1fr_1fr_200px_200px_48px] bg-[#9BA5B7] p-4 font-medium">
+            <div></div> {/* Column for public/private icon */}
             <div>Name</div>
             <div>Description</div>
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleSort('subject_id')}>
@@ -327,11 +349,59 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
               sortedExams.map((exam) => (
                 <div
                   key={exam.id}
-                  className="grid grid-cols-[1fr_1fr_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
+                  className="grid grid-cols-[24px_1fr_1fr_200px_200px_48px] p-4 bg-[#8791A7] hover:bg-[#7A84999] items-center"
                 >
-                  <button onClick={() => handleExamClick(exam)} className="text-left hover:underline">
-                    {exam.name}
-                  </button>
+                  <div className="flex items-center justify-center text-gray-600">
+                    {exam.is_public ? (
+                      <Globe className="h-4 w-4" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                  </div>
+                  <HoverCard openDelay={800} closeDelay={0}>
+                    <HoverCardTrigger asChild>
+                      <button onClick={() => handleExamClick(exam)} className="text-left hover:underline">
+                        {exam.name}
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent
+                      className="w-64 bg-[#2B2B2B] text-white p-3 rounded-lg shadow-lg pointer-events-none"
+                      sideOffset={2}
+                      align="start"
+                      alignOffset={40}
+                    >
+                      <div className="space-y-1.5">
+                        <h4 className="font-semibold text-sm">{exam.name}</h4>
+                        <div className="text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span>Date changed:</span>
+                            <span>
+                              {new Date(exam.created_at).toLocaleString("no-NO", {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              })}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Questions:</span>
+                            <span>{examStats[exam.id]?.questionCount ?? '...'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Status:</span>
+                            <span>{exam.is_public ? 'Public' : 'Private'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Subject:</span>
+                            <span>{exam.subject_id || 'None'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
                   <div>{exam.description}</div>
                   <div>
                     <Select
