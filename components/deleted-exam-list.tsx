@@ -6,6 +6,18 @@ import { Input } from "@/components/ui/input"
 import { Search, MoreVertical, ArrowUpDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabaseClient"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { ConfirmDialog } from "./confirm-dialog"
 
 interface DeletedExam {
   id: number
@@ -23,13 +35,13 @@ export default function DeletedExamList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortField, setSortField] = useState<SortField>('deleted_at')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [examToDelete, setExamToDelete] = useState<DeletedExam | null>(null)
 
   const fetchDeletedExams = async () => {
     const { data, error } = await supabase
       .from("Exams")
       .select("*")
-      .not("deleted_at", "is", null)
-      .order("deleted_at", { ascending: false })
+      .eq("is_deleted", true)
 
     if (error) {
       console.error("Error fetching deleted exams:", error)
@@ -57,7 +69,7 @@ export default function DeletedExamList() {
   }
 
   const filteredAndSortedExams = deletedExams
-    .filter(exam => 
+    .filter(exam =>
       exam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (exam.description?.toLowerCase() || "").includes(searchQuery.toLowerCase())
     )
@@ -69,6 +81,36 @@ export default function DeletedExamList() {
         return multiplier * (new Date(a.deleted_at).getTime() - new Date(b.deleted_at).getTime())
       }
     })
+
+  const handleRestore = async (examId: number) => {
+    const { error } = await supabase
+      .from("Exams")
+      .update({ is_deleted: false })
+      .eq("id", examId)
+
+    if (error) {
+      console.error("Error restoring exam:", error)
+      toast.error("Failed to restore exam")
+    } else {
+      toast.success("Exam restored successfully")
+      fetchDeletedExams()
+    }
+  }
+
+  const handlePermanentDelete = async (examId: number) => {
+    const { error } = await supabase
+      .from("Exams")
+      .delete()
+      .eq("id", examId)
+
+    if (error) {
+      console.error("Error permanently deleting exam:", error)
+      toast.error("Failed to permanently delete exam")
+    } else {
+      toast.success("Exam permanently deleted")
+      fetchDeletedExams()
+    }
+  }
 
   return (
     <main className="flex-1 p-8">
@@ -129,8 +171,13 @@ export default function DeletedExamList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Restore</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem onClick={() => handleRestore(exam.id)}>
+                          Restore
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setExamToDelete(exam)}
+                          className="text-red-600"
+                        >
                           Delete Permanently
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -142,6 +189,18 @@ export default function DeletedExamList() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={examToDelete !== null}
+        onOpenChange={(open) => !open && setExamToDelete(null)}
+        onConfirm={() => {
+          if (examToDelete) {
+            handlePermanentDelete(examToDelete.id)
+            setExamToDelete(null)
+          }
+        }}
+        title="Delete Exam Permanently"
+        description="Are you sure you want to permanently delete this exam? This action cannot be undone."
+      />
     </main>
   )
 }

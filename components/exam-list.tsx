@@ -54,7 +54,10 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
   const [examStats, setExamStats] = useState<Record<number, { questionCount: number }>>({})
 
   const fetchExams = async () => {
-    let query = supabase.from("Exams").select("*")
+    let query = supabase
+      .from("Exams")
+      .select("*")
+      .eq("is_deleted", false)  // Add this line
 
     if (subjectId) {
       const normalizedSubjectId = subjectId.toLowerCase()
@@ -138,13 +141,18 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
   }
 
   async function handleDelete(examId: number) {
-    const { error } = await supabase.from("Exams").delete().eq("id", examId)
+    const { error } = await supabase
+      .from("Exams")
+      .update({
+        is_deleted: true
+      })
+      .eq("id", examId)
 
     if (error) {
       console.error("Error deleting exam:", error)
       toast.error("Failed to delete exam")
     } else {
-      toast.success("Exam deleted successfully")
+      toast.success("Exam moved to trash")
       fetchExams()
     }
     setExamToDelete(null)
@@ -493,7 +501,7 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
           onOpenChange={(open) => !open && setExamToDelete(null)}
           onConfirm={() => examToDelete && handleDelete(examToDelete.id)}
           title="Delete Exam"
-          description="Are you sure you want to delete this exam? This action cannot be undone."
+          description="Are you sure you want to delete this exam? This action will move it to the deleted list."
         />
       </div>
     </main>
