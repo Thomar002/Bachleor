@@ -144,7 +144,8 @@ export default function ExamList({ subjectId = null, isPublic = false }: ExamLis
     const { error } = await supabase
       .from("Exams")
       .update({
-        is_deleted: true
+        is_deleted: true,
+        deleted_at: new Date().toISOString() // Dette vil gi riktig timestampz format for Postgres
       })
       .eq("id", examId)
 

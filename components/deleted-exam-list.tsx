@@ -162,7 +162,18 @@ export default function DeletedExamList() {
                   <div>{exam.name}</div>
                   <div>{exam.description || "-"}</div>
                   <div>{exam.subject_id?.toUpperCase() || "No subject"}</div>
-                  <div>{new Date(exam.deleted_at).toLocaleDateString("no-NO")}</div>
+                  <div>
+                    {exam.deleted_at
+                      ? new Date(exam.deleted_at).toLocaleString("no-NO", {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      })
+                      : "-"}
+                  </div>
                   <div className="flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
