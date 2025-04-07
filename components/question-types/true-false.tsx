@@ -473,9 +473,7 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
               <div className="flex flex-col items-center">
                 <Button
                   className="bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white flex items-center gap-2"
-                  onClick={() => {
-                    router.push('/questions/create')
-                  }}
+                  onClick={() => { }}
                 >
                   <Plus className="h-5 w-5" />
                   Create Question
