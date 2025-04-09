@@ -608,7 +608,13 @@ export function Text({ questionName, initialTags = [], onTagsChange }: Props) {
                   <Input
                     type="number"
                     value={currentPoints || ''}
-                    onChange={(e) => setCurrentPoints(Number(e.target.value))}
+                    onChange={(e) => {
+                      const value = Math.min(999, parseInt(e.target.value) || 0)
+                      setCurrentPoints(value)
+                      setPoints(value)
+                    }}
+                    min="0"
+                    max="999"
                     className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>

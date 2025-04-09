@@ -577,10 +577,12 @@ export function TrueFalse({ questionName, initialTags = [], onTagsChange }: Prop
                       type="number"
                       value={currentPoints || ''}
                       onChange={(e) => {
-                        const value = e.target.value === '' ? 0 : parseInt(e.target.value)
+                        const value = Math.min(999, parseInt(e.target.value) || 0)
                         setCurrentPoints(value)
                         setPoints(value)
                       }}
+                      min="0"
+                      max="999"
                       className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
