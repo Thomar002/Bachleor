@@ -246,16 +246,176 @@ export function Equation({ questionName, initialTags = [], onTagsChange }: Props
         </svg>
       )
     },
-    { label: "Pi", symbol: "π" },
-    { label: "Infinity", symbol: "∞" },
-    { label: "Plus/Minus", symbol: "±" },
-    { label: "Less than or equal", symbol: "≤" },
-    { label: "Greater than or equal", symbol: "≥" },
-    { label: "Not equal", symbol: "≠" },
-    { label: "Approximately", symbol: "≈" },
-    { label: "If and only if", symbol: "⇔" },
-    { label: "Implies", symbol: "⇒" },
-    { label: "Is implied by", symbol: "⇐" },
+    {
+      label: "Pi",
+      symbol: "π",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M3 12h18M7 4v16M17 4v16" />
+        </svg>
+      )
+    },
+    {
+      label: "Infinity",
+      symbol: "∞",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.739-8z" />
+        </svg>
+      )
+    },
+    {
+      label: "Plus/Minus",
+      symbol: "±",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M12 4v16m-8-8h16M12 20v4m0-24v4" />
+        </svg>
+      )
+    },
+    {
+      label: "Less than or equal",
+      symbol: "≤",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M16 8L8 12L16 16M5 18H19" />
+        </svg>
+      )
+    },
+    {
+      label: "Greater than or equal",
+      symbol: "≥",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M8 8L16 12L8 16M5 18H19" />
+        </svg>
+      )
+    },
+    {
+      label: "Not equal",
+      symbol: "≠",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M5 12H19M5 9H19M19 15L5 15M4 4L20 20" />
+        </svg>
+      )
+    },
+    {
+      label: "Approximately",
+      symbol: "≈",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M5 9c4-1.5 6 1.5 10 0M5 15c4-1.5 6 1.5 10 0" />
+        </svg>
+      )
+    },
+    {
+      label: "If and only if",
+      symbol: "⇔",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M4 12h16m-4-4l4 4-4 4m-8-8L4 12l4 4" />
+        </svg>
+      )
+    },
+    {
+      label: "Implies",
+      symbol: "⇒",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M4 12h16m-4-4l4 4-4 4" />
+        </svg>
+      )
+    },
+    {
+      label: "Is implied by",
+      symbol: "⇐",
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="M20 12H4m4-4L4 12l4 4" />
+        </svg>
+      )
+    }
   ]
 
   const insertSymbol = (symbol: string) => {
