@@ -17,7 +17,7 @@ import { RenameDialog } from "./rename-dialog"
 import { toast } from "sonner"
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card"
 
-type SortField = 'created_at'
+type SortField = 'created_at' | 'points'
 type SortOrder = 'asc' | 'desc'
 
 interface Question {
@@ -376,7 +376,12 @@ export default function QuestionDashboard({ examId, examName, isPublic = false }
               <div>Name</div>
               <div>Type</div>
               <div>Tags</div>
-              <div>Points</div> {/* New points column */}
+              <div
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => handleSort('points')}
+              >
+                Points {getSortIcon('points')}
+              </div>
               <div
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={() => handleSort('created_at')}

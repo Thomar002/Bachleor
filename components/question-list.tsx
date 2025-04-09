@@ -34,7 +34,7 @@ interface Question {
   points: number
 }
 
-type SortField = 'created_at'
+type SortField = 'created_at' | 'points'
 type SortOrder = 'asc' | 'desc'
 type QTIVersion = 'QTI 2.x' | 'QTI 3.x'
 
@@ -273,9 +273,15 @@ export default function QuestionList() {
       (!selectedTag || (selectedTag === "none" ? question.tags.length === 0 : question.tags.includes(selectedTag)))
     )
     .sort((a, b) => {
-      const dateA = new Date(a.created_at).getTime()
-      const dateB = new Date(b.created_at).getTime()
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+      if (sortField === 'points') {
+        return sortOrder === 'asc'
+          ? (a.points || 0) - (b.points || 0)
+          : (b.points || 0) - (a.points || 0)
+      } else {
+        const dateA = new Date(a.created_at).getTime()
+        const dateB = new Date(b.created_at).getTime()
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+      }
     })
 
   const handleCreateQuestion = async (name: string, tags: string[], examId: string | null) => {
@@ -421,7 +427,12 @@ export default function QuestionList() {
           <div>Name</div>
           <div>Type</div>
           <div>Tags</div>
-          <div>Points</div>
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => handleSort('points')}
+          >
+            Points {getSortIcon('points')}
+          </div>
           <div>Exam</div>
           <div
             className="flex items-center gap-2 cursor-pointer"
